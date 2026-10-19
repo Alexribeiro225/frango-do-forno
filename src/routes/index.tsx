@@ -3,7 +3,6 @@ import { useMemo, useState } from "react";
 import hero from "@/assets/hero.jpg";
 import frango from "@/assets/frango.jpg";
 import costela from "@/assets/costela.jpg";
-import combo from "@/assets/combo.jpg";
 import frangoRecheado from "@/assets/frango_recheado.jpg";
 import pontaPeito from "@/assets/ponta_peito.jpg";
 import joelhoPorco from "@/assets/joelho_porco.jpg";
