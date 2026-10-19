@@ -4,6 +4,16 @@ import hero from "@/assets/hero.jpg";
 import frango from "@/assets/frango.jpg";
 import costela from "@/assets/costela.jpg";
 import combo from "@/assets/combo.jpg";
+import frangoRecheado from "@/assets/frango_recheado.jpg";
+import pontaPeito from "@/assets/ponta_peito.jpg";
+import joelhoPorco from "@/assets/joelho_porco.jpg";
+import arrozGregia from "@/assets/arroz_grega.jpg";
+import arrozCarreteiro from "@/assets/arroz_carreteiro.jpg";
+import maioneseLegumes from "@/assets/maionese_legumes.jpg";
+import cocaCola from "@/assets/coca_cola.jpg";
+import guarana from "@/assets/guarana.jpg";
+import comboFamilia from "@/assets/combo_familia.jpg";
+import comboJoelho from "@/assets/combo_joelho.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
