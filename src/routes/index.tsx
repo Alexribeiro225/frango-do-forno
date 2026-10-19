@@ -35,18 +35,18 @@ const ADDRESS = "R. José Ferreira Leite, 2-05 - Parque Júlio Nóbrega, Bauru -
 type Item = { id: number; cat: string; name: string; price: number; desc: string; img: string };
 const items: Item[] = [
   { id: 1, cat: "Aves", name: "Frango Tradicional", price: 50, img: frango, desc: "Frango inteiro assado, dourado e temperado." },
-  { id: 2, cat: "Aves", name: "Frango Recheado", price: 57, img: frango, desc: "Recheio de bacon, calabresa, presunto, queijos, azeitonas, milho, ervilha e cenoura." },
+  { id: 2, cat: "Aves", name: "Frango Recheado", price: 57, img: frangoRecheado, desc: "Recheio de bacon, calabresa, presunto, queijos, azeitonas, milho, ervilha e cenoura." },
   { id: 3, cat: "Bovinos", name: "Costela Minga Tradicional", price: 90, img: costela, desc: "Costela bovina assada devagar até ficar macia." },
-  { id: 4, cat: "Bovinos", name: "Ponta de Peito", price: 90, img: costela, desc: "Ponta de peito no tempero da casa." },
-  { id: 5, cat: "Suínos", name: "Joelho de Porco", price: 70, img: combo, desc: "Joelho seringado, carne rosada estilo tender." },
-  { id: 6, cat: "Acompanhamentos", name: "Arroz à Grega (500g)", price: 25, img: combo, desc: "Arroz colorido com legumes, azeitona e uva passa." },
-  { id: 7, cat: "Acompanhamentos", name: "Arroz Carreteiro (500g)", price: 25, img: combo, desc: "Com bacon, calabresa, carne seca, cebola e tomate." },
-  { id: 8, cat: "Acompanhamentos", name: "Maionese de Legumes (500g)", price: 25, img: combo, desc: "Batata, cenoura, vagem, ovos, milho, ervilha e azeitonas." },
-  { id: 9, cat: "Bebidas", name: "Coca-Cola 2 Litros", price: 15, img: combo, desc: "Bem gelada." },
-  { id: 10, cat: "Bebidas", name: "Guaraná Antarctica 2 Litros", price: 10, img: combo, desc: "Bem gelado." },
+  { id: 4, cat: "Bovinos", name: "Ponta de Peito", price: 90, img: pontaPeito, desc: "Ponta de peito no tempero da casa." },
+  { id: 5, cat: "Suínos", name: "Joelho de Porco", price: 70, img: joelhoPorco, desc: "Joelho seringado, carne rosada estilo tender." },
+  { id: 6, cat: "Acompanhamentos", name: "Arroz à Grega (500g)", price: 25, img: arrozGregia, desc: "Arroz colorido com legumes, azeitona e uva passa." },
+  { id: 7, cat: "Acompanhamentos", name: "Arroz Carreteiro (500g)", price: 25, img: arrozCarreteiro, desc: "Com bacon, calabresa, carne seca, cebola e tomate." },
+  { id: 8, cat: "Acompanhamentos", name: "Maionese de Legumes (500g)", price: 25, img: maioneseLegumes, desc: "Batata, cenoura, vagem, ovos, milho, ervilha e azeitonas." },
+  { id: 9, cat: "Bebidas", name: "Coca-Cola 2 Litros", price: 15, img: cocaCola, desc: "Bem gelada." },
+  { id: 10, cat: "Bebidas", name: "Guaraná Antarctica 2 Litros", price: 10, img: guarana, desc: "Bem gelado." },
   { id: 11, cat: "Combos", name: "Combo Frango", price: 80, img: frango, desc: "Frango assado + maionese 500g + Guaraná 2L." },
-  { id: 12, cat: "Combos", name: "Combo Família", price: 100, img: combo, desc: "Frango assado + arroz à grega 500g + maionese 500g + Coca-Cola 2L." },
-  { id: 13, cat: "Combos", name: "Combo Joelho de Porco", price: 125, img: combo, desc: "Joelho + maionese 500g + arroz à grega 500g + Guaraná 2L + molho barbecue." },
+  { id: 12, cat: "Combos", name: "Combo Família", price: 100, img: comboFamilia, desc: "Frango assado + arroz à grega 500g + maionese 500g + Coca-Cola 2L." },
+  { id: 13, cat: "Combos", name: "Combo Joelho de Porco", price: 125, img: comboJoelho, desc: "Joelho + maionese 500g + arroz à grega 500g + Guaraná 2L + molho barbecue." },
   { id: 14, cat: "Combos", name: "Combo Costela", price: 145, img: costela, desc: "Costela minga + arroz carreteiro 500g + maionese 500g + Coca-Cola 2L." },
 ];
 const cats = ["Todos", "Combos", "Aves", "Bovinos", "Suínos", "Acompanhamentos", "Bebidas"];
