@@ -46,8 +46,8 @@ function Index() {
   const [cat, setCat] = useState("Todos");
   const [cart, setCart] = useState<Record<number, number>>({});
   const list = cat === "Todos" ? items : items.filter((i) => i.cat === cat);
-  const lines = items.filter((i) => cart[i.id]);
-  const total = useMemo(() => lines.reduce((s, i) => s + i.price * cart[i.id], 0), [lines, cart]);
+  const lines = items.filter((i) => (cart[i.id] ?? 0));
+  const total = useMemo(() => lines.reduce((s, i) => s + i.price * (cart[i.id] ?? 0), 0), [lines, cart]);
   const add = (id: number, d: number) =>
     setCart((c) => {
       const n = { ...c, [id]: Math.max(0, (c[id] ?? 0) + d) };
@@ -55,7 +55,7 @@ function Index() {
       return n;
     });
   const order = () => {
-    const txt = `Olá! Quero fazer um pedido:\n${lines.map((i) => `${cart[i.id]}x ${i.name} - ${brl(i.price * cart[i.id])}`).join("\n")}\nTotal: ${brl(total)}`;
+    const txt = `Olá! Quero fazer um pedido:\n${lines.map((i) => `${cart[i.id]}x ${i.name} - ${brl(i.price * (cart[i.id] ?? 0))}`).join("\n")}\nTotal: ${brl(total)}`;
     window.open(`https://wa.me/${WHATS}?text=${encodeURIComponent(txt)}`, "_blank");
   };
 
@@ -143,7 +143,7 @@ function Index() {
       {lines.length > 0 && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-            <span className="font-semibold">{lines.reduce((s, i) => s + cart[i.id], 0)} itens · {brl(total)}</span>
+            <span className="font-semibold">{lines.reduce((s, i) => s + (cart[i.id] ?? 0), 0)} itens · {brl(total)}</span>
             <button onClick={order} className="rounded-full bg-primary px-6 py-3 font-bold text-primary-foreground">Enviar pedido no WhatsApp</button>
           </div>
         </div>
