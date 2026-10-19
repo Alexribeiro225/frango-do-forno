@@ -6,7 +6,7 @@ import costela from "@/assets/costela.jpg";
 import frangoRecheado from "@/assets/frango_recheado.jpg";
 import pontaPeito from "@/assets/ponta_peito.jpg";
 import joelhoPorco from "@/assets/joelho_porco.jpg";
-import arrozGregia from "@/assets/arroz_grega.jpg";
+import arrozGrega from "@/assets/arroz_grega.jpg";
 import arrozCarreteiro from "@/assets/arroz_carreteiro.jpg";
 import maioneseLegumes from "@/assets/maionese_legumes.jpg";
 import cocaCola from "@/assets/coca_cola.jpg";
@@ -38,7 +38,7 @@ const items: Item[] = [
   { id: 3, cat: "Bovinos", name: "Costela Minga Tradicional", price: 90, img: costela, desc: "Costela bovina assada devagar até ficar macia." },
   { id: 4, cat: "Bovinos", name: "Ponta de Peito", price: 90, img: pontaPeito, desc: "Ponta de peito no tempero da casa." },
   { id: 5, cat: "Suínos", name: "Joelho de Porco", price: 70, img: joelhoPorco, desc: "Joelho seringado, carne rosada estilo tender." },
-  { id: 6, cat: "Acompanhamentos", name: "Arroz à Grega (500g)", price: 25, img: arrozGregia, desc: "Arroz colorido com legumes, azeitona e uva passa." },
+  { id: 6, cat: "Acompanhamentos", name: "Arroz à Grega (500g)", price: 25, img: arrozGrega, desc: "Arroz colorido com legumes, azeitona e uva passa." },
   { id: 7, cat: "Acompanhamentos", name: "Arroz Carreteiro (500g)", price: 25, img: arrozCarreteiro, desc: "Com bacon, calabresa, carne seca, cebola e tomate." },
   { id: 8, cat: "Acompanhamentos", name: "Maionese de Legumes (500g)", price: 25, img: maioneseLegumes, desc: "Batata, cenoura, vagem, ovos, milho, ervilha e azeitonas." },
   { id: 9, cat: "Bebidas", name: "Coca-Cola 2 Litros", price: 15, img: cocaCola, desc: "Bem gelada." },
