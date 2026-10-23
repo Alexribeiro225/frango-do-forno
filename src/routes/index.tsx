@@ -243,7 +243,7 @@ function Index() {
             <div className="section-heading section-heading-row"><div><span className="section-kicker">Um pouquinho do nosso dia a dia</span><h2>Siga a Frango Show</h2></div><a href={INSTAGRAM} target="_blank" rel="noreferrer" className="button button-outline"><Instagram size={17} /> Seguir no Instagram</a></div>
             <div className="instagram-grid">{[
               "https://static.prod-images.emergentagent.com/jobs/5d4248a5-245c-4546-ad2d-dc6d39306348/images/463224a57ccd4aaefe199615cc63a71e1091764fb868e3533d912a19a17d074c.jpeg",
-              "/images/instagram-2.jpeg",
+              "https://static.prod-images.emergentagent.com/jobs/5d4248a5-245c-4546-ad2d-dc6d39306348/images/c2365bcd03242b43eef51af5455033b37fbbd75516068dcd0c5517a10aa605a9.jpeg",
               "/images/instagram-3.jpeg",
               "/images/instagram-4.jpeg",
             ].map((src, index) => <a key={src} href={INSTAGRAM} target="_blank" rel="noreferrer" aria-label={`Ver publicação ${index + 1} no Instagram`}><img src={src} alt={`Comida da Frango Show, publicação ${index + 1}`} loading="lazy" /></a>)}</div>
