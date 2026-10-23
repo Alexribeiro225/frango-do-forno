@@ -60,7 +60,7 @@ const items: Item[] = [
 ];
 const categories = ["Todos", "Aves", "Bovinos", "Suínos", "Acompanhamentos", "Sobremesas", "Bebidas", "Combos"];
 const combos = items.filter((item) => item.cat === "Combos");
-const favoriteOrder = [1, 3, 2, 5];
+const favoriteOrder = [1, 3, 5, 2];
 const favorites = favoriteOrder
   .map((id) => items.find((item) => item.id === id))
   .filter((item): item is Item => item !== undefined);
