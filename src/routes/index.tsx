@@ -88,6 +88,7 @@ function Index() {
   const [cat, setCat] = useState("Todos");
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<Record<number, number>>({});
+  const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isOpen] = useState(openStatus);
@@ -97,6 +98,11 @@ function Index() {
   const lines = items.filter((item) => (cart[item.id] ?? 0) > 0);
   const total = lines.reduce((sum, item) => sum + item.price * (cart[item.id] ?? 0), 0);
   const count = lines.reduce((sum, item) => sum + (cart[item.id] ?? 0), 0);
+  const quantityFor = (id: number) => quantities[id] ?? 1;
+  const changeQuantity = (id: number, amount: number) => setQuantities((current) => ({
+    ...current,
+    [id]: Math.max(1, (current[id] ?? 1) + amount),
+  }));
   const add = (id: number, amount: number) => setCart((current) => {
     const next = { ...current, [id]: Math.max(0, (current[id] ?? 0) + amount) };
     if (!next[id]) delete next[id];
@@ -125,13 +131,14 @@ function Index() {
         <div className="product-bottom">
           <strong className="price">{brl(item.price)}</strong>
           {favorite ? <button className="button button-primary button-small" onClick={() => add(item.id, 1)}>Pedir agora <ArrowRight size={15} /></button> :
-            <div className="product-action">{cart[item.id] ? <>
-              <div className="quantity-control">
-                <button aria-label={`Remover uma unidade de ${item.name}`} onClick={() => add(item.id, -1)}><Minus size={15} /></button>
-                <span>{cart[item.id]}</span>
-                <button aria-label={`Adicionar uma unidade de ${item.name}`} onClick={() => add(item.id, 1)}><Plus size={15} /></button>
+            <div className="product-action">
+              <div className="quantity-control" aria-label={`Quantidade de ${item.name}`}>
+                <button aria-label={`Diminuir quantidade de ${item.name}`} onClick={() => changeQuantity(item.id, -1)}><Minus size={15} /></button>
+                <span>{quantityFor(item.id)}</span>
+                <button aria-label={`Aumentar quantidade de ${item.name}`} onClick={() => changeQuantity(item.id, 1)}><Plus size={15} /></button>
               </div>
-            </> : <button className="button button-primary button-small" onClick={() => add(item.id, 1)}>Adicionar <Plus size={15} /></button>}</div>
+              <button className="button button-primary button-small" onClick={() => add(item.id, quantityFor(item.id))}>Adicionar</button>
+            </div>
           }
         </div>
       </div>
