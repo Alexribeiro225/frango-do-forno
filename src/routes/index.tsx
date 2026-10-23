@@ -391,8 +391,7 @@ function Index() {
               <div className="cart-total"><span>Total</span><b>{brl(total)}</b></div>
               <button className="button button-primary checkout-button" onClick={() => setCheckout(true)}>Continuar para finalizar <ArrowRight size={17} /></button>
             </>
-          )
-        ) : (
+          ) : (
             <div className="cart-empty"><ShoppingBag size={36} /><b>Seu carrinho está vazio</b><p>Escolha seus pratos favoritos no cardápio.</p><button className="button button-primary" onClick={() => { setCartOpen(false); document.getElementById("cardapio")?.scrollIntoView({ behavior: "smooth" }); }}>Ver cardápio</button></div>
           )}
         </aside>
