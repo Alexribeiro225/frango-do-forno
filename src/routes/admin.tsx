@@ -42,7 +42,7 @@ function Admin() {
     try {
       const payload = { ...form };
       if (tab === "products") payload.price = Number(payload.price);
-      if (tab === "promotions") { payload.starts_at = payload.starts_at || null; payload.ends_at = payload.ends_at || null; }
+      if (tab === "promotions") { payload["starts_at"] = payload["starts_at"] || null; payload["ends_at"] = payload["ends_at"] || null; }
       await saveRow(tab, payload, editing ?? undefined); setNotice("Alterações salvas."); fresh(); await refresh();
     } catch (e) { setError(message(e)); } finally { setBusy(false); }
   }
