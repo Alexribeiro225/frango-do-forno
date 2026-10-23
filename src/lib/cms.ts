@@ -19,6 +19,7 @@ async function authFetch(path: string, init: RequestInit = {}, token?: string) {
   return data;
 }
 export async function signIn(email: string, password: string) {
+  if (email.trim().toLowerCase() !== "conectstore.app@gmail.com") throw new Error("Este e-mail não tem acesso de superadministrador.");
   const data = await authFetch("/auth/v1/token?grant_type=password", { method: "POST", body: JSON.stringify({ email, password }) });
   const session = { access_token: data.access_token, refresh_token: data.refresh_token, expires_at: Date.now() + Number(data.expires_in || 3600) * 1000, user: data.user };
   saveSession(session); return session.user;

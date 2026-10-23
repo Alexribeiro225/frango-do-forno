@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { ImagePlus, LogOut, Pencil, Plus, Trash2 } from "lucide-react";
-import { Announcement, configured, currentUser, deleteRow, listRows, Product, Promo, saveRow, signIn, signOut, uploadImage } from "@/lib/cms";
+import { configured, currentUser, deleteRow, listRows, saveRow, signIn, signOut, uploadImage } from "@/lib/cms";
+import type { Announcement, Product, Promo } from "@/lib/cms";
 
 export const Route = createFileRoute("/admin")({ component: Admin });
 type Tab = "products" | "promotions" | "announcements";
@@ -54,7 +55,7 @@ function Admin() {
     if (!window.confirm("Excluir este registro?")) return;
     try { await deleteRow(tab, id); await refresh(); } catch (e) { setError(message(e)); }
   }
-  if (!configured) return <main className="admin-page"><section className="admin-login"><span className="admin-eyebrow">FRANGO SHOW · ADMINISTRAÇÃO</span><h1>Configure o painel</h1><p>O painel foi criado. Para guardar produtos, imagens e promoções com segurança, primeiro conecte um projeto Supabase seguindo o guia incluído no repositório.</p><a className="admin-primary" href="/ADMIN_SETUP.md">Ver instruções de configuração</a></section></main>;
+  if (!configured) return <main className="admin-page"><section className="admin-login"><span className="admin-eyebrow">FRANGO SHOW · ADMINISTRAÇÃO</span><h1>Configure o painel</h1><p>O painel foi criado. Para guardar produtos, imagens e promoções com segurança, primeiro conecte um projeto Supabase seguindo o guia incluído no repositório.</p><a className="admin-primary" href="https://github.com/Alexribeiro225/frango-do-forno/blob/main/ADMIN_SETUP.md">Ver instruções de configuração</a></section></main>;
   if (!user) return <main className="admin-page"><form className="admin-login" onSubmit={login}><span className="admin-eyebrow">FRANGO SHOW · SUPERADMIN</span><h1>Entrar no painel</h1><p>Acesso exclusivo para conectstore.app@gmail.com.</p><label>E-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label><label>Senha<input type="password" value={password} onChange={e => setPassword(e.target.value)} required /></label>{error && <div className="admin-error">{error}</div>}<button className="admin-primary" disabled={busy}>{busy ? "Entrando..." : "Entrar"}</button></form></main>;
   const imageField = <label className="admin-image-field">Imagem<input type="file" accept="image/*" onChange={e => image(e.currentTarget.files?.[0])} /><span><ImagePlus size={18}/> Enviar imagem</span>{typeof form.image_url === "string" && form.image_url && <img src={form.image_url} alt="Prévia" />}</label>;
   return <main className="admin-page"><div className="admin-wrap">
