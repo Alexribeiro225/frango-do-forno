@@ -16,6 +16,8 @@ import maioneseLegumes from "@/assets/maionese_legumes.jpg";
 
 import comboFamilia from "@/assets/combo_familia.jpg";
 import comboJoelho from "@/assets/combo_joelho.jpg";
+import cocaColaImage from "@/assets/coca_cola.jpg";
+import guaranaImage from "@/assets/guarana.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -34,9 +36,9 @@ export const Route = createFileRoute("/")({
 const hero = "/images/hero-frango.jpeg";
 const costela = "https://static.prod-images.emergentagent.com/jobs/5d4248a5-245c-4546-ad2d-dc6d39306348/images/a02c5299fe12f1343615fcb6966c76fcede43c357ad7dc6c89b85f283c3e9a6b.jpeg";
 const frango = "https://static.prod-images.emergentagent.com/jobs/5d4248a5-245c-4546-ad2d-dc6d39306348/images/463224a57ccd4aaefe199615cc63a71e1091764fb868e3533d912a19a17d074c.jpeg";
-const cocaCola = "https://images.pexels.com/photos/35020136/pexels-photo-35020136.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940";
+const cocaCola = cocaColaImage;
 const pontaPeito = "https://static.prod-images.emergentagent.com/jobs/5d4248a5-245c-4546-ad2d-dc6d39306348/images/a02c5299fe12f1343615fcb6966c76fcede43c357ad7dc6c89b85f283c3e9a6b.jpeg";
-const guarana = "https://static.prod-images.emergentagent.com/jobs/5d4248a5-245c-4546-ad2d-dc6d39306348/images/6a5a9f0bcb407f97f2b5f01f96709effa81b9f3bbbc8cd2577db7653a9458de2.jpeg";
+const guarana = guaranaImage;
 const arrozCarreteiro = "https://static.prod-images.emergentagent.com/jobs/5d4248a5-245c-4546-ad2d-dc6d39306348/images/08694d940cd40ea86e1e82344c9514da41aa11216aff82cb0df420ea8c8d5221.jpeg";
 const frangoRecheado = "https://static.prod-images.emergentagent.com/jobs/5d4248a5-245c-4546-ad2d-dc6d39306348/images/c2365bcd03242b43eef51af5455033b37fbbd75516068dcd0c5517a10aa605a9.jpeg";
 const WHATS = "5514988085532";
