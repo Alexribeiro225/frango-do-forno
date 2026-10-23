@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { loadPublicContent, type Product as CmsProduct } from "@/lib/cms";
 import {
   ArrowLeft, ArrowRight, Check, ChevronDown, Clock3, Instagram, MapPin, Menu,
   Minus, Plus, Search, ShoppingBag, ShoppingCart, Star, Truck, X,
@@ -87,6 +88,13 @@ function openStatus() {
 }
 
 function Index() {
+  const [catalog, setCatalog] = useState<Item[]>(items);
+  const [cmsPromos, setCmsPromos] = useState<Array<{id:number;title:string;description:string;image_url:string|null}>>([]);
+  const [cmsAnnouncements, setCmsAnnouncements] = useState<Array<{id:number;title:string;body:string;image_url:string|null}>>([]);
+  useEffect(() => { loadPublicContent().then(content => { if (!content) return; if (content.products.length) setCatalog(content.products.map((p: CmsProduct) => ({id:p.id,cat:p.category,name:p.name,price:Number(p.price),desc:p.description,img:p.image_url,popular:p.is_popular}))); setCmsPromos(content.promos); setCmsAnnouncements(content.announcements); }); }, []);
+  const combos = catalog.filter(item => item.cat === "Combos");
+  const favoriteOrder = [1, 3, 5, 2];
+  const favorites = favoriteOrder.map(id => catalog.find(item => item.id === id)).filter((item): item is Item => item !== undefined);
   const [cat, setCat] = useState("Todos");
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<Record<number, number>>({});
@@ -97,10 +105,10 @@ function Index() {
   const [payment, setPayment] = useState("PIX");
   const [menuOpen, setMenuOpen] = useState(false);
   const [isOpen] = useState(openStatus);
-  const shown = useMemo(() => items.filter((item) =>
+  const shown = useMemo(() => catalog.filter((item) =>
     (cat === "Todos" || item.cat === cat) && item.name.toLocaleLowerCase("pt-BR").includes(search.toLocaleLowerCase("pt-BR"))
-  ), [cat, search]);
-  const lines = items.filter((item) => (cart[item.id] ?? 0) > 0);
+  ), [cat, search, catalog]);
+  const lines = catalog.filter((item) => (cart[item.id] ?? 0) > 0);
   const total = lines.reduce((sum, item) => sum + item.price * (cart[item.id] ?? 0), 0);
   const count = lines.reduce((sum, item) => sum + (cart[item.id] ?? 0), 0);
   const quantityFor = (id: number) => quantities[id] ?? 1;
@@ -222,6 +230,7 @@ function Index() {
           </div>
         </section>
 
+        {(cmsPromos.length > 0 || cmsAnnouncements.length > 0) && <section className="cms-banners section-wrap" aria-label="Avisos e promoções">{cmsAnnouncements.map(a => <article className="cms-banner" key={"a"+a.id}>{a.image_url && <img src={a.image_url} alt="" />}<div><b>{a.title}</b><p>{a.body}</p></div></article>)}{cmsPromos.map(p => <article className="cms-banner promo-banner" key={"p"+p.id}>{p.image_url && <img src={p.image_url} alt="" />}<div><b>{p.title}</b><p>{p.description}</p></div></article>)}</section>}
         <section className="menu-section section-wrap" id="cardapio">
           <div className="section-heading">
             <span className="section-kicker">Sabor de verdade em cada escolha</span>
