@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import {
-  ArrowRight, Check, ChevronDown, Clock3, Instagram, MapPin, Menu,
+  ArrowLeft, ArrowRight, Check, ChevronDown, Clock3, Instagram, MapPin, Menu,
   Minus, Plus, Search, ShoppingBag, ShoppingCart, Star, Truck, X,
 } from "lucide-react";
 
@@ -90,6 +90,9 @@ function Index() {
   const [cart, setCart] = useState<Record<number, number>>({});
   const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [cartOpen, setCartOpen] = useState(false);
+  const [checkout, setCheckout] = useState(false);
+  const [fulfillment, setFulfillment] = useState<"delivery" | "pickup">("delivery");
+  const [payment, setPayment] = useState("PIX");
   const [menuOpen, setMenuOpen] = useState(false);
   const [isOpen] = useState(openStatus);
   const shown = useMemo(() => items.filter((item) =>
@@ -108,10 +111,41 @@ function Index() {
     if (!next[id]) delete next[id];
     return next;
   });
-  const order = () => {
+  const order = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (!lines.length) return;
-    const message = `Olá! Quero fazer um pedido:\n\n${lines.map((item) => `${cart[item.id]}x ${item.name} — ${brl(item.price * (cart[item.id] ?? 0))}`).join("\n")}\n\nTotal: ${brl(total)}`;
+    const form = new FormData(event.currentTarget);
+    const name = String(form.get("customerName") ?? "").trim();
+    const phone = String(form.get("customerPhone") ?? "").trim();
+    const notes = String(form.get("orderNotes") ?? "").trim();
+    const deliveryDetails = fulfillment === "delivery" ? [
+      "Endereço: " + String(form.get("address") ?? "").trim() + ", nº " + String(form.get("number") ?? "").trim(),
+      form.get("cep") ? "CEP: " + String(form.get("cep")).trim() : "",
+      form.get("neighborhood") ? "Bairro: " + String(form.get("neighborhood")).trim() : "",
+      form.get("complement") ? "Complemento: " + String(form.get("complement")).trim() : "",
+      form.get("reference") ? "Ponto de referência: " + String(form.get("reference")).trim() : "",
+    ].filter(Boolean) : [];
+    const orderLines = lines.map((item) => String(cart[item.id]) + "x " + item.name + " — " + brl(item.price * (cart[item.id] ?? 0)));
+    const message = [
+      "Olá! Quero finalizar meu pedido.",
+      "",
+      "Modalidade: " + (fulfillment === "delivery" ? "Delivery" : "Retirada"),
+      "Nome: " + name,
+      "Telefone: " + phone,
+      ...deliveryDetails,
+      "Forma de pagamento: " + payment,
+      notes ? "Observação: " + notes : "",
+      "",
+      "Itens do pedido:",
+      ...orderLines,
+      "",
+      "Subtotal: " + brl(total),
+      "Taxa de entrega: " + (fulfillment === "delivery" ? "A combinar" : "R$ 0,00"),
+      "Total: " + brl(total) + (fulfillment === "delivery" ? " + taxa de entrega a combinar" : ""),
+    ].filter((line) => line !== "").join("\n");
     window.open(waLink(message), "_blank", "noopener,noreferrer");
+    setCartOpen(false);
+    setCheckout(false);
   };
 
   const nav = [
@@ -282,13 +316,86 @@ function Index() {
       </footer>
 
       {count > 0 && <div className="cart-summary"><div><ShoppingBag size={19} /><b>{count} {count === 1 ? "item" : "itens"}</b><span>· {brl(total)}</span></div><button className="button button-primary" onClick={() => setCartOpen(true)}>Ver carrinho <ArrowRight size={16} /></button></div>}
-      {cartOpen && <div className="cart-backdrop" role="presentation" onClick={(event) => { if (event.target === event.currentTarget) setCartOpen(false); }}>
-        <aside className="cart-panel" role="dialog" aria-modal="true" aria-label="Seu carrinho">
-          <div className="cart-heading"><div><span className="section-kicker">Seu pedido</span><h2>Carrinho</h2></div><button aria-label="Fechar carrinho" onClick={() => setCartOpen(false)}><X /></button></div>
-          {lines.length ? <><div className="cart-lines">{lines.map((item) => <div className="cart-line" key={item.id}><img src={item.img} alt="" /><div className="cart-line-copy"><b>{item.name}</b><span>{brl(item.price)}</span><div className="quantity-control"><button aria-label={`Remover uma unidade de ${item.name}`} onClick={() => add(item.id, -1)}><Minus size={14} /></button><span>{cart[item.id]}</span><button aria-label={`Adicionar uma unidade de ${item.name}`} onClick={() => add(item.id, 1)}><Plus size={14} /></button></div></div><strong>{brl(item.price * (cart[item.id] ?? 0))}</strong></div>)}</div><div className="cart-total"><span>Total</span><b>{brl(total)}</b></div><button className="button button-primary checkout-button" onClick={order}>Finalizar pelo WhatsApp <ArrowRight size={17} /></button></> :
-          <div className="cart-empty"><ShoppingBag size={36} /><b>Seu carrinho está vazio</b><p>Escolha seus pratos favoritos no cardápio.</p><button className="button button-primary" onClick={() => { setCartOpen(false); document.getElementById("cardapio")?.scrollIntoView({ behavior: "smooth" }); }}>Ver cardápio</button></div>}
+      {cartOpen && <div className="cart-backdrop" role="presentation" onClick={(event) => { if (event.target === event.currentTarget) { setCartOpen(false); setCheckout(false); } }}>
+        <aside className="cart-panel" role="dialog" aria-modal="true" aria-label={checkout ? "Finalizar pedido" : "Seu carrinho"}>
+          <div className="cart-heading">
+            <div className="cart-heading-title">
+              {checkout && <button className="cart-back-button" type="button" aria-label="Voltar ao carrinho" onClick={() => setCheckout(false)}><ArrowLeft size={22} /></button>}
+              <ShoppingBag className="checkout-title-icon" size={22} />
+              <h2>{checkout ? "Finalizar Pedido" : "Carrinho"}</h2>
+            </div>
+            <button aria-label="Fechar carrinho" onClick={() => { setCartOpen(false); setCheckout(false); }}><X /></button>
+          </div>
+          {lines.length ? checkout ? (
+            <form className="checkout-form" onSubmit={order}>
+              <div className="checkout-fields">
+                <div className="fulfillment-options" role="group" aria-label="Forma de recebimento">
+                  <button type="button" className={fulfillment === "delivery" ? "fulfillment-option active" : "fulfillment-option"} aria-pressed={fulfillment === "delivery"} onClick={() => setFulfillment("delivery")}>🛵 Delivery</button>
+                  <button type="button" className={fulfillment === "pickup" ? "fulfillment-option active" : "fulfillment-option"} aria-pressed={fulfillment === "pickup"} onClick={() => setFulfillment("pickup")}>🏠 Retirada</button>
+                </div>
+                <input type="hidden" name="fulfillment" value={fulfillment} />
+                <label className="checkout-field">Nome *
+                  <input name="customerName" autoComplete="name" required />
+                </label>
+                <label className="checkout-field">Telefone *
+                  <input name="customerPhone" type="tel" autoComplete="tel" placeholder="(14) 9...." required />
+                </label>
+                {fulfillment === "delivery" && <>
+                  <div className="checkout-two-col">
+                    <label className="checkout-field">CEP
+                      <input name="cep" inputMode="numeric" autoComplete="postal-code" />
+                    </label>
+                    <label className="checkout-field">Número *
+                      <input name="number" inputMode="numeric" required />
+                    </label>
+                  </div>
+                  <label className="checkout-field">Endereço *
+                    <input name="address" autoComplete="street-address" required />
+                  </label>
+                  <div className="checkout-two-col">
+                    <label className="checkout-field">Bairro
+                      <input name="neighborhood" autoComplete="address-level3" />
+                    </label>
+                    <label className="checkout-field">Complemento
+                      <input name="complement" />
+                    </label>
+                  </div>
+                  <label className="checkout-field">Ponto de referência
+                    <input name="reference" />
+                  </label>
+                </>}
+                <fieldset className="payment-fieldset">
+                  <legend>Forma de pagamento</legend>
+                  <div className="payment-options" role="group" aria-label="Forma de pagamento">
+                    {["PIX", "Cartão", "Dinheiro"].map((option) =>
+                      <button key={option} type="button" className={payment === option ? "payment-option active" : "payment-option"} aria-pressed={payment === option} onClick={() => setPayment(option)}>{option}</button>
+                    )}
+                  </div>
+                </fieldset>
+                <label className="checkout-field">Observação do pedido
+                  <textarea name="orderNotes" rows={3} placeholder="Ex.: entregar depois das 12h" />
+                </label>
+              </div>
+              <div className="checkout-footer">
+                <div className="checkout-totals">
+                  <p><span>Subtotal</span><b>{brl(total)}</b></p>
+                  <p><span>Taxa de entrega</span><b>{fulfillment === "delivery" ? "A combinar" : "R$ 0,00"}</b></p>
+                  <p className="checkout-grand-total"><strong>Total</strong><strong>{brl(total)}</strong></p>
+                </div>
+                <button className="button checkout-whatsapp" type="submit">Finalizar pelo WhatsApp</button>
+              </div>
+            </form>
+          ) : (
+            <>
+              <div className="cart-lines">{lines.map((item) => <div className="cart-line" key={item.id}><img src={item.img} alt="" /><div className="cart-line-copy"><b>{item.name}</b><span>{brl(item.price)}</span><div className="quantity-control"><button aria-label="Remover uma unidade" onClick={() => add(item.id, -1)}><Minus size={14} /></button><span>{cart[item.id]}</span><button aria-label="Adicionar uma unidade" onClick={() => add(item.id, 1)}><Plus size={14} /></button></div></div><strong>{brl(item.price * (cart[item.id] ?? 0))}</strong></div>)}</div>
+              <div className="cart-total"><span>Total</span><b>{brl(total)}</b></div>
+              <button className="button button-primary checkout-button" onClick={() => setCheckout(true)}>Continuar para finalizar <ArrowRight size={17} /></button>
+            </>
+          ) : (
+            <div className="cart-empty"><ShoppingBag size={36} /><b>Seu carrinho está vazio</b><p>Escolha seus pratos favoritos no cardápio.</p><button className="button button-primary" onClick={() => { setCartOpen(false); document.getElementById("cardapio")?.scrollIntoView({ behavior: "smooth" }); }}>Ver cardápio</button></div>
+          )}
         </aside>
-      </div>}
+      </div>
     </div>
   );
 }
