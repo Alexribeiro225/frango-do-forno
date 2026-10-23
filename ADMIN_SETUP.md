@@ -4,8 +4,8 @@ O painel está em /admin. O banco Supabase gerenciado pelo Lovable já foi habil
 
 ## O que falta para entrar no painel
 
-1. No projeto Lovable, abra a área Cloud/Database e crie um usuário em Authentication para conectstore.app@gmail.com. Defina a senha diretamente no painel, sem compartilhá-la por chat.
-2. Confirme na configuração do projeto se as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY estão disponíveis para a aplicação. Se não estiverem, adicione a Project URL e a chave pública anon/publishable do Supabase como variáveis de ambiente do site e publique novamente.
+1. No projeto Lovable, abra More → Users → Add user e crie o usuário conectstore.app@gmail.com com a senha que preferir (opção "Create new user", já confirmada). Não compartilhe a senha por chat.
+2. As variáveis VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY já estão configuradas no projeto — nenhuma ação necessária.
 3. Acesse https://frango-do-forno.lovable.app/admin e faça login.
 
 A lista de produtos e imagens iniciais já está no banco. Depois do login, você pode cadastrar/editar produtos, publicar promoções e avisos e enviar imagens pelo painel.
