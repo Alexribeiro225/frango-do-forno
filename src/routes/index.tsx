@@ -396,6 +396,7 @@ function Index() {
           )}
         </aside>
       </div>
+      }
     </div>
   );
 }
