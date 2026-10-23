@@ -4,7 +4,6 @@ import {
   ArrowRight, Check, ChevronDown, Clock3, Instagram, MapPin, Menu,
   Minus, Plus, Search, ShoppingBag, ShoppingCart, Star, Truck, X,
 } from "lucide-react";
-import hero from "@/assets/hero.jpg";
 import frango from "@/assets/frango.jpg";
 import costela from "@/assets/costela.jpg";
 import frangoRecheado from "@/assets/frango_recheado.jpg";
@@ -32,6 +31,7 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
+const hero = "/images/hero-frango.jpeg";
 const WHATS = "5514988085532";
 const ADDRESS = "R. José Ferreira Leite, 2-05 - Parque Júlio Nóbrega, Bauru - SP, 17031-451";
 const INSTAGRAM = "https://www.instagram.com/frangoshow.bauru/";
