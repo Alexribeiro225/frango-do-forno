@@ -59,8 +59,11 @@ const items: Item[] = [
   { id: 14, cat: "Combos", name: "Combo Costela", price: 145, img: comboCostelaImg, desc: "01 Costela minga assada + 500g de arroz carreteiro + 500g de maionese + 01 Coca Cola de 2 litros.", popular: true },
 ];
 const categories = ["Todos", "Aves", "Bovinos", "Suínos", "Acompanhamentos", "Sobremesas", "Bebidas", "Combos"];
-const combos = [items[10], items[11], items[12], items[13]];
-const favorites = [items[0], items[2], items[1], items[4]];
+const combos = items.filter((item) => item.cat === "Combos");
+const favoriteOrder = [1, 3, 2, 5];
+const favorites = favoriteOrder
+  .map((id) => items.find((item) => item.id === id))
+  .filter((item): item is Item => item !== undefined);
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const waLink = (text = "") => `https://wa.me/${WHATS}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
 
@@ -69,8 +72,8 @@ function openStatus() {
     timeZone: "America/Sao_Paulo", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
   }).formatToParts(new Date());
   const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  const day = value.weekday;
-  const time = Number(value.hour) * 60 + Number(value.minute);
+  const day = value["weekday"];
+  const time = Number(value["hour"]) * 60 + Number(value["minute"]);
   return day !== "Mon" && time >= 600 && time < 900;
 }
 
