@@ -3,7 +3,7 @@ export type Promo = { id: number; title: string; description: string; image_url:
 export type Announcement = { id: number; title: string; body: string; image_url: string | null; is_active: boolean };
 
 const url = import.meta.env.VITE_SUPABASE_URL?.replace(/\/$/, "");
-const anon = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const anon = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 export const configured = Boolean(url && anon);
 const storageKey = "frango-show-admin-session";
 type Session = { access_token: string; refresh_token: string; expires_at: number; user: { email?: string } };
