@@ -36,10 +36,10 @@ const WHATS = "5514988085532";
 const ADDRESS = "R. José Ferreira Leite, 2-05 - Parque Júlio Nóbrega, Bauru - SP, 17031-451";
 const INSTAGRAM = "https://www.instagram.com/frangoshow.bauru/";
 const MAPS = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(ADDRESS);
-const comboFrangoImg = "https://static.prod-images.emergentagent.com/jobs/5d4248a5-245c-4546-ad2d-dc6d39306348/images/efa247e97affc69e4ab32ace8313942d99ca9a51ce420229addbe16a7ae00684.jpeg";
-const comboCostelaImg = "https://static.prod-images.emergentagent.com/jobs/5d4248a5-245c-4546-ad2d-dc6d39306348/images/1310d856738ee1f42ac0a8a63cb71ede29886ff345c783eeec6c440e1ffa2c52.jpeg";
-const kitchenImg = "https://images.pexels.com/photos/14498783/pexels-photo-14498783.jpeg?auto=compress&cs=tinysrgb&w=900";
-const logoImg = "https://assets.olaclick.app/companies/logos/f7f3bd17-1c19-4b29-b1fa-d7aca3b0efb1.webp";
+const comboFrangoImg = "/images/combo-frango.jpeg";
+const comboCostelaImg = "/images/combo-costela.jpeg";
+const kitchenImg = "/images/cozinha.jpeg";
+const logoImg = "/images/frango-show-logo.webp";
 
 type Item = { id: number; cat: string; name: string; price: number; desc: string; img: string; popular?: boolean };
 const items: Item[] = [
@@ -235,10 +235,10 @@ function Index() {
           <div className="section-wrap">
             <div className="section-heading section-heading-row"><div><span className="section-kicker">Um pouquinho do nosso dia a dia</span><h2>Siga a Frango Show</h2></div><a href={INSTAGRAM} target="_blank" rel="noreferrer" className="button button-outline"><Instagram size={17} /> Seguir no Instagram</a></div>
             <div className="instagram-grid">{[
-              "https://images.unsplash.com/photo-1617636423451-0db0119c14cd?w=600&q=85",
-              "https://images.unsplash.com/photo-1641873933980-fcff60026f50?w=600&q=85",
-              "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&q=85",
-              "https://images.unsplash.com/photo-1568360987818-833c9383a326?w=600&q=85",
+              "/images/instagram-1.jpeg",
+              "/images/instagram-2.jpeg",
+              "/images/instagram-3.jpeg",
+              "/images/instagram-4.jpeg",
             ].map((src, index) => <a key={src} href={INSTAGRAM} target="_blank" rel="noreferrer" aria-label={`Ver publicação ${index + 1} no Instagram`}><img src={src} alt={`Comida da Frango Show, publicação ${index + 1}`} loading="lazy" /></a>)}</div>
           </div>
         </section>
