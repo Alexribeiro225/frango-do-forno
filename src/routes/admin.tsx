@@ -32,7 +32,7 @@ function Admin() {
     setEditing(row.id);
     const data = { ...row } as unknown as Record<string, unknown>;
     if (tab === "products") { data.category = (row as Product).category; data.description = (row as Product).description; }
-    if (tab === "promotions") { data.starts_at = (row as Promo).starts_at?.slice(0, 16) || ""; data.ends_at = (row as Promo).ends_at?.slice(0, 16) || ""; }
+    if (tab === "promotions") { data["starts_at"] = (row as Promo)["starts_at"]?.slice(0, 16) || ""; data["ends_at"] = (row as Promo)["ends_at"]?.slice(0, 16) || ""; }
     setForm(data);
     document.getElementById("admin-form")?.scrollIntoView({ behavior: "smooth" });
   }
