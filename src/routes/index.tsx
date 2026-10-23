@@ -13,7 +13,7 @@ import arrozGrega from "@/assets/arroz_grega.jpg";
 import arrozCarreteiro from "@/assets/arroz_carreteiro.jpg";
 import maioneseLegumes from "@/assets/maionese_legumes.jpg";
 import cocaCola from "@/assets/coca_cola.jpg";
-import guarana from "@/assets/guarana.jpg";
+
 import comboFamilia from "@/assets/combo_familia.jpg";
 import comboJoelho from "@/assets/combo_joelho.jpg";
 
@@ -33,6 +33,7 @@ export const Route = createFileRoute("/")({
 
 const hero = "/images/hero-frango.jpeg";
 const frango = "https://static.prod-images.emergentagent.com/jobs/5d4248a5-245c-4546-ad2d-dc6d39306348/images/463224a57ccd4aaefe199615cc63a71e1091764fb868e3533d912a19a17d074c.jpeg";
+const guarana = "https://static.prod-images.emergentagent.com/jobs/5d4248a5-245c-4546-ad2d-dc6d39306348/images/6a5a9f0bcb407f97f2b5f01f96709effa81b9f3bbbc8cd2577db7653a9458de2.jpeg";
 const WHATS = "5514988085532";
 const ADDRESS = "R. José Ferreira Leite, 2-05 - Parque Júlio Nóbrega, Bauru - SP, 17031-451";
 const INSTAGRAM = "https://www.instagram.com/frangoshow.bauru/";
