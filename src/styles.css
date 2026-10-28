@@ -569,3 +569,8 @@
   body.printing-counter-receipt .counter-receipt.print-current { display:block!important; width:100%!important; color:#000!important; font:12px/1.4 Arial,sans-serif!important; }
   .counter-receipt h2 { text-align:center; font-size:17px; }.counter-receipt>div { display:flex; justify-content:space-between; gap:8px; margin:7px 0; }.counter-receipt>strong { display:block; text-align:right; font-size:16px; }.counter-receipt p { text-align:center; }
 }
+
+.combo-components-editor { display:grid; gap:10px; margin:12px 0 18px; padding:15px; border:1px solid #eadbd0; border-radius:12px; background:#fffaf6; }
+.combo-components-editor>div:first-child { display:grid; gap:4px; }.combo-components-editor>div:first-child>b { color:#8f211c; }.combo-components-editor>div:first-child>small { color:#746c65; font-size:13px; }
+.admin-form .combo-component-row { display:grid; grid-template-columns:20px minmax(0,1fr) 78px; align-items:center; gap:10px; margin:0; padding:8px 0; border-top:1px solid #eee5dd; }
+.combo-component-row>input[type=checkbox] { width:17px; height:17px; accent-color:#bd201b; }.combo-component-row>span { display:grid; gap:3px; }.combo-component-row>span>b { font-size:14px; }.combo-component-row>span>small { color:#77716c; font-size:12px; }.admin-form .combo-component-row>input[type=number] { min-height:38px; padding:7px; }
