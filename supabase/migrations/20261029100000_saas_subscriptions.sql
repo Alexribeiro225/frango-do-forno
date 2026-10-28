@@ -86,44 +86,61 @@ grant select on public.saas_plans to anon, authenticated;
 grant insert, update, delete on public.saas_plans to authenticated;
 grant usage, select on sequence public.saas_plans_id_seq to authenticated;
 grant select on public.saas_subscriptions to authenticated;
+drop policy if exists "Anyone reads active SaaS plans" on public.saas_plans
+;
 create policy "Anyone reads active SaaS plans" on public.saas_plans
   for select to anon, authenticated using (is_active or public.is_superadmin());
+drop policy if exists "Master manages SaaS plans" on public.saas_plans
+;
 create policy "Master manages SaaS plans" on public.saas_plans
   for all to authenticated using (public.is_superadmin()) with check (public.is_superadmin());
+drop policy if exists "Users read their subscription" on public.saas_subscriptions
+;
 create policy "Users read their subscription" on public.saas_subscriptions
   for select to authenticated using (user_id = auth.uid() or public.is_superadmin());
+drop policy if exists "Master manages subscriptions" on public.saas_subscriptions
+;
 create policy "Master manages subscriptions" on public.saas_subscriptions
   for all to authenticated using (public.is_superadmin()) with check (public.is_superadmin());
 
 -- Application data remains one shared store. The owner gets access only while paid;
 -- the master retains access for support and maintenance.
 drop policy if exists "Admin manages products" on public.products;
+drop policy if exists "Store users manage products" on public.products;
 create policy "Store users manage products" on public.products for all to authenticated
   using (public.has_active_saas_subscription()) with check (public.has_active_saas_subscription());
 drop policy if exists "Admin manages promotions" on public.promotions;
+drop policy if exists "Store users manage promotions" on public.promotions;
 create policy "Store users manage promotions" on public.promotions for all to authenticated
   using (public.has_active_saas_subscription()) with check (public.has_active_saas_subscription());
 drop policy if exists "Admin manages announcements" on public.announcements;
+drop policy if exists "Store users manage announcements" on public.announcements;
 create policy "Store users manage announcements" on public.announcements for all to authenticated
   using (public.has_active_saas_subscription()) with check (public.has_active_saas_subscription());
 drop policy if exists "Admin manages combo compositions" on public.combo_components;
+drop policy if exists "Store users manage combo compositions" on public.combo_components;
 create policy "Store users manage combo compositions" on public.combo_components for all to authenticated
   using (public.has_active_saas_subscription()) with check (public.has_active_saas_subscription());
 drop policy if exists "Kitchen admin reads orders" on public.orders;
+drop policy if exists "Store users read orders" on public.orders;
 create policy "Store users read orders" on public.orders for select to authenticated
   using (public.has_active_saas_subscription());
 drop policy if exists "Kitchen admin updates orders" on public.orders;
+drop policy if exists "Store users update orders" on public.orders;
 create policy "Store users update orders" on public.orders for update to authenticated
   using (public.has_active_saas_subscription()) with check (public.has_active_saas_subscription());
 
 drop policy if exists "Admin uploads site images" on storage.objects;
+drop policy if exists "Store users upload site images" on storage.objects;
 create policy "Store users upload site images" on storage.objects for insert to authenticated
   with check (bucket_id = 'site-images' and public.has_active_saas_subscription());
 drop policy if exists "Admin updates site images" on storage.objects;
+drop policy if exists "Store users update site images" on storage.objects;
 create policy "Store users update site images" on storage.objects for update to authenticated
   using (bucket_id = 'site-images' and public.has_active_saas_subscription())
   with check (bucket_id = 'site-images' and public.has_active_saas_subscription());
 drop policy if exists "Admin deletes site images" on storage.objects;
+drop policy if exists "Store users delete site images" on storage.objects;
 create policy "Store users delete site images" on storage.objects for delete to authenticated
   using (bucket_id = 'site-images' and public.has_active_saas_subscription());
 
