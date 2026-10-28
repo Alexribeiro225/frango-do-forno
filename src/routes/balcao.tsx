@@ -31,7 +31,7 @@ function Counter() {
 
   const visibleProducts = useMemo(() => products.filter(product => product.name.toLocaleLowerCase("pt-BR").includes(search.toLocaleLowerCase("pt-BR"))), [products, search]);
   const selected = products.filter(product => (cart[product.id] || 0) > 0);
-  const total = selected.reduce((sum, product) => sum + Number(product.price) * cart[product.id], 0);
+  const total = selected.reduce((sum, product) => sum + Number(product.price) * (cart[product.id] ?? 0), 0);
 
   function change(product: Product, amount: number) {
     setCart(current => {
@@ -52,7 +52,7 @@ function Counter() {
     if (!selected.length || busy) return;
     setBusy(true); setError("");
     try {
-      const sale = await createCounterSale(payment, selected.map(product => ({ product_id: product.id, quantity: cart[product.id] })));
+      const sale = await createCounterSale(payment, selected.map(product => ({ product_id: product.id, quantity: cart[product.id] ?? 0 })));
       setReceipt({ ...sale, created_at: new Date().toISOString() });
       setCart({});
       void loadProducts().catch(() => setError("Venda registrada, mas não foi possível atualizar a lista de estoque."));
@@ -107,8 +107,8 @@ function Counter() {
       </section>
       <aside className="counter-cart"><h2><ShoppingCart size={20}/> Venda atual</h2>
         {!selected.length ? <p className="counter-empty">Adicione produtos para iniciar a venda.</p> : <div className="counter-cart-lines">{selected.map(product => <div className="counter-cart-line" key={product.id}>
-          <div><b>{cart[product.id]}× {product.name}</b><span>{money(Number(product.price) * cart[product.id])}</span></div>
-          <button aria-label={"Remover " + product.name} onClick={() => change(product,-cart[product.id])}><Trash2 size={16}/></button>
+          <div><b>{cart[product.id]}× {product.name}</b><span>{money(Number(product.price) * (cart[product.id] ?? 0))}</span></div>
+          <button aria-label={"Remover " + product.name} onClick={() => change(product,-(cart[product.id] ?? 0))}><Trash2 size={16}/></button>
         </div>)}</div>}
         <label className="counter-payment">Forma de pagamento<select value={payment} onChange={e => setPayment(e.target.value)}><option>PIX</option><option>Cartão</option><option>Dinheiro</option></select></label>
         <div className="counter-total"><span>Total</span><b>{money(total)}</b></div>

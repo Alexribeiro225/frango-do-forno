@@ -3,7 +3,7 @@ import { useEffect,useState,type FormEvent } from "react";
 import { ArrowLeft,LogOut,Pencil,Plus,Trash2 } from "lucide-react";
 import { configured,currentUser,deletePlan,listPlans,savePlan,signOut,type SaaSPlan } from "@/lib/cms";
 
-export const Route=createFileRoute("/admin/planos")({component:AdminPlans});
+export const Route=createFileRoute("/admin_/planos")({component:AdminPlans});
 const emptyPlan={name:"",description:"",price:"",billing_interval:"monthly",checkout_url:"",kiwify_product_id:"",features:"",is_active:true,sort_order:100};
 const intervalLabel:Record<string,string>={weekly:"Semanal",monthly:"Mensal",bimonthly:"Bimestral",quarterly:"Trimestral",semiannual:"Semestral",annual:"Anual"};
 

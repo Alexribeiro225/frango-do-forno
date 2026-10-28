@@ -99,7 +99,7 @@ function Kitchen() {
   useEffect(() => {
     if (!user || !autoPrint || !printQueue.length || printingRef.current) return;
     const timer = window.setTimeout(() => {
-      const started = printOrder(printQueue[0], () => setPrintQueue(queue => queue.slice(1)));
+      const started = printOrder(printQueue[0]!, () => setPrintQueue(queue => queue.slice(1)));
       if (!started) setPrintPulse(pulse => pulse + 1);
     }, 500);
     return () => window.clearTimeout(timer);
