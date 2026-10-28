@@ -534,3 +534,5 @@
   body.printing-kitchen-order .kitchen-order-actions { display:none!important; }
   body.printing-kitchen-order .kitchen-total strong { color:#000!important; font-size:15px!important; }
 }
+
+.admin-header-actions { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }.admin-header-actions a { color:inherit; text-decoration:none; }
