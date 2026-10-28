@@ -15,10 +15,10 @@ const nextStatus: Partial<Record<KitchenOrder["status"], KitchenOrder["status"]>
 };
 
 function Kitchen() {
-  const [user, setUser] = useState<{ email?: string } | null>(null);
+  const [user, setUser] = useState<Awaited<ReturnType<typeof currentUser>>>(null)
   const [checked, setChecked] = useState(false);
   const [orders, setOrders] = useState<KitchenOrder[]>([]);
-  const [email, setEmail] = useState("conectstore.app@gmail.com");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -110,7 +110,7 @@ function Kitchen() {
     <form className="kitchen-login" onSubmit={login}>
       <ChefHat size={34} />
       <h1>Cozinha</h1>
-      <p>Entre com a conta administrativa para acessar os pedidos.</p>
+      <p>Entre com o login da loja ou do admin master para acessar os pedidos.</p>
       {!configured && <p className="kitchen-error">O banco ainda não está configurado neste site.</p>}
       <label>E-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="username" /></label>
       <label>Senha<input type="password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" /></label>
@@ -118,6 +118,8 @@ function Kitchen() {
       <button className="kitchen-primary" disabled={busy || !configured}>{busy ? "Entrando…" : "Entrar"}</button>
     </form>
   </main>;
+
+  if (user.role === "owner" && user.subscriptionStatus !== "active") return <main className="kitchen-page kitchen-login-wrap"><section className="kitchen-login"><h1>Assinatura não ativa</h1><p>O acesso à cozinha será liberado após a confirmação do pagamento.</p><a href="/planos">Ver planos</a><button onClick={()=>{signOut();setUser(null);}}>Sair</button></section></main>;
 
   return <main className="kitchen-page">
     <header className="kitchen-header">
