@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { ChefHat, Clock3, LogOut, Printer, RefreshCw } from "lucide-react";
 import { configured, currentUser, listOrders, signIn, signOut, updateOrderStatus, type KitchenOrder } from "@/lib/cms";
 
@@ -23,12 +23,31 @@ function Kitchen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [updatedAt, setUpdatedAt] = useState("");
+  const [autoPrint, setAutoPrint] = useState(true);
+  const [printQueue, setPrintQueue] = useState<number[]>([]);
+  const knownOrderIds = useRef<Set<number> | null>(null);
+  const autoPrintRef = useRef(true);
+  const printingRef = useRef(false);
 
   useEffect(() => { currentUser().then(setUser).finally(() => setChecked(true)); }, []);
+  useEffect(() => {
+    const enabled = localStorage.getItem("frango-kitchen-auto-print") !== "false";
+    autoPrintRef.current = enabled;
+    setAutoPrint(enabled);
+  }, []);
   const refresh = useCallback(async () => {
     if (!user) return;
-    try { setOrders(await listOrders()); setUpdatedAt(new Date().toLocaleTimeString("pt-BR")); setError(""); }
-    catch (e) { setError(e instanceof Error ? e.message : "Não foi possível carregar os pedidos."); }
+    try {
+      const latest = await listOrders();
+      const known = knownOrderIds.current;
+      if (known === null) knownOrderIds.current = new Set(latest.map(order => order.id));
+      else {
+        const incoming = latest.filter(order => !known.has(order.id)).map(order => order.id);
+        latest.forEach(order => known.add(order.id));
+        if (autoPrintRef.current && incoming.length) setPrintQueue(queue => [...queue, ...incoming.reverse()]);
+      }
+      setOrders(latest); setUpdatedAt(new Date().toLocaleTimeString("pt-BR")); setError("");
+    } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível carregar os pedidos."); }
   }, [user]);
   useEffect(() => {
     if (!user) return;
@@ -47,20 +66,35 @@ function Kitchen() {
     try { await updateOrderStatus(order.id, status); await refresh(); }
     catch (e) { setError(e instanceof Error ? e.message : "Não foi possível atualizar o pedido."); }
   }
-  function printOrder(id: number) {
+  const printOrder = useCallback((id: number, onFinished?: () => void) => {
+    if (printingRef.current) return false;
     const target = document.getElementById("order-" + id);
-    if (!target) return;
+    if (!target) return false;
+    printingRef.current = true;
     document.body.classList.add("printing-kitchen-order");
     target.classList.add("print-current");
+    let finished = false;
     const cleanup = () => {
+      if (finished) return;
+      finished = true;
       document.body.classList.remove("printing-kitchen-order");
       target.classList.remove("print-current");
       window.removeEventListener("afterprint", cleanup);
+      printingRef.current = false;
+      onFinished?.();
     };
     window.addEventListener("afterprint", cleanup);
     window.print();
     window.setTimeout(cleanup, 1500);
-  }
+    return true;
+  }, []);
+  useEffect(() => {
+    if (!user || !autoPrint || !printQueue.length || printingRef.current) return;
+    const timer = window.setTimeout(() => {
+      printOrder(printQueue[0], () => setPrintQueue(queue => queue.slice(1)));
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [user, autoPrint, printQueue, printOrder]);
 
   if (!checked) return <main className="kitchen-page"><p>Verificando acesso…</p></main>;
   if (!user) return <main className="kitchen-page kitchen-login-wrap">
@@ -78,8 +112,8 @@ function Kitchen() {
 
   return <main className="kitchen-page">
     <header className="kitchen-header">
-      <div><span className="kitchen-mark"><ChefHat /></span><div><h1>Painel da cozinha</h1><p>Pedidos recebidos pelo site · Atualiza automaticamente a cada 10 segundos</p></div></div>
-      <div className="kitchen-header-actions"><span className="kitchen-refresh-label">{updatedAt ? "Atualizado às " + updatedAt : "Carregando…"}</span><button onClick={() => void refresh()} aria-label="Atualizar pedidos"><RefreshCw size={17} /> Atualizar</button><button onClick={() => { signOut(); setUser(null); }}><LogOut size={17} /> Sair</button></div>
+      <div><span className="kitchen-mark"><ChefHat /></span><div><h1>Painel da cozinha</h1><p>Pedidos recebidos pelo site · Atualiza a cada 10 segundos · Impressão automática {autoPrint ? "ligada" : "desligada"}</p></div></div>
+      <div className="kitchen-header-actions"><span className="kitchen-refresh-label">{updatedAt ? "Atualizado às " + updatedAt : "Carregando…"}</span><label className="kitchen-auto-print"><input type="checkbox" checked={autoPrint} onChange={event => { const enabled = event.currentTarget.checked; autoPrintRef.current = enabled; setAutoPrint(enabled); localStorage.setItem("frango-kitchen-auto-print", String(enabled)); if (!enabled) setPrintQueue([]); }} /><Printer size={16} /> Impressão automática</label><button onClick={() => void refresh()} aria-label="Atualizar pedidos"><RefreshCw size={17} /> Atualizar</button><button onClick={() => { signOut(); setUser(null); }}><LogOut size={17} /> Sair</button></div>
     </header>
     {error && <p className="kitchen-error kitchen-alert" role="alert">{error}</p>}
     <section className="kitchen-orders" aria-label="Lista de pedidos">
