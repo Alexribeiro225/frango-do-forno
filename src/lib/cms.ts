@@ -96,7 +96,8 @@ export async function uploadImage(file: File) {
   return `${url}/storage/v1/object/public/site-images/${path}`;
 }
 
-export type OrderItem = { product_id: number; name: string; category: string; quantity: number; unit_price: number; line_total: number };
+export type OrderComponent = { product_id: number; name: string; quantity: number };
+export type OrderItem = { product_id: number; name: string; category: string; description?: string; components?: OrderComponent[]; quantity: number; unit_price: number; line_total: number };
 export type KitchenOrder = {
   id: number; created_at: string; customer_name: string; customer_phone: string;
   fulfillment: "delivery" | "pickup" | "counter"; address: Record<string, string>;
@@ -116,7 +117,7 @@ export async function createOrder(input: {
   }) }) as Promise<{ id: number; order_number: number; items: OrderItem[]; subtotal: number; delivery_fee: number | null; total: number }>;
 }
 export async function listOrders() {
-  return rest("orders", "?select=*&fulfillment=neq.counter&order=created_at.desc&limit=100") as Promise<KitchenOrder[]>;
+  return rest("orders", "?select=*&order=created_at.desc&limit=100") as Promise<KitchenOrder[]>;
 }
 export async function updateOrderStatus(id: number, status: KitchenOrder["status"]) {
   return rest("orders", `?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
