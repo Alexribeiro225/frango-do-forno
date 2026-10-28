@@ -71,3 +71,29 @@ export async function uploadImage(file: File) {
   if (!response.ok) throw new Error("Falha ao enviar imagem. Verifique o bucket e as permissões.");
   return `${url}/storage/v1/object/public/site-images/${path}`;
 }
+
+export type OrderItem = { product_id: number; name: string; category: string; quantity: number; unit_price: number; line_total: number };
+export type KitchenOrder = {
+  id: number; created_at: string; customer_name: string; customer_phone: string;
+  fulfillment: "delivery" | "pickup"; address: Record<string, string>;
+  payment_method: string; notes: string; items: OrderItem[];
+  subtotal: number; delivery_fee: number | null; total: number;
+  status: "new" | "preparing" | "ready" | "completed" | "cancelled";
+};
+export async function createOrder(input: {
+  customer_name: string; customer_phone: string; fulfillment: "delivery" | "pickup";
+  address: Record<string, string>; payment_method: string; notes: string;
+  items: Array<{ product_id: number; quantity: number }>;
+}) {
+  return authFetch("/rest/v1/rpc/create_order", { method: "POST", body: JSON.stringify({
+    p_customer_name: input.customer_name, p_customer_phone: input.customer_phone,
+    p_fulfillment: input.fulfillment, p_address: input.address,
+    p_payment_method: input.payment_method, p_notes: input.notes, p_items: input.items,
+  }) }) as Promise<{ id: number; order_number: number; items: OrderItem[]; subtotal: number; delivery_fee: number | null; total: number }>;
+}
+export async function listOrders() {
+  return rest("orders", "?select=*&order=created_at.desc&limit=100") as Promise<KitchenOrder[]>;
+}
+export async function updateOrderStatus(id: number, status: KitchenOrder["status"]) {
+  return rest("orders", `?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
+}
