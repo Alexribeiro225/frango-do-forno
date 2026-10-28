@@ -6,7 +6,7 @@ import { configured, createCounterSale, currentUser, loadPublicContent, signIn, 
 export const Route = createFileRoute("/balcao")({ component: Counter });
 const money = (value: number) => Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-type SaleReceipt = { id: number; items: Array<{ product_id: number; name: string; quantity: number; unit_price: number; line_total: number }>; total: number; payment_method: string; created_at: string };
+type SaleReceipt = { id: number; items: Array<{ product_id: number; name: string; description?: string; components?: Array<{ product_id: number; name: string; quantity: number }>; quantity: number; unit_price: number; line_total: number }>; total: number; payment_method: string; created_at: string };
 
 function Counter() {
   const [user, setUser] = useState<{ email?: string } | null>(null);
@@ -98,7 +98,7 @@ function Counter() {
           const reachedStock = stock != null && quantity >= stock;
           return <article className={"counter-product" + (unavailable ? " is-unavailable" : "")} key={product.id}>
             {product.image_url && <img src={product.image_url} alt="" />}
-            <div className="counter-product-info"><b>{product.name}</b><span>{money(Number(product.price))}</span><small>{stock == null ? "Estoque sem controle" : unavailable ? "Esgotado" : "Disponível: " + stock}</small></div>
+            <div className="counter-product-info"><b>{product.name}</b><span>{money(Number(product.price))}</span><small className="counter-product-description">{product.description}</small><small>{stock == null ? "Estoque sem controle" : unavailable ? "Esgotado" : "Disponível: " + stock}</small></div>
             <div className="counter-quantity"><button aria-label={"Diminuir " + product.name} disabled={!quantity} onClick={() => change(product,-1)}><Minus size={15}/></button><span>{quantity}</span><button aria-label={"Adicionar " + product.name} disabled={unavailable || reachedStock} onClick={() => change(product,1)}><Plus size={15}/></button></div>
           </article>;
         })}{!visibleProducts.length && <p className="counter-empty">Nenhum produto encontrado.</p>}</div>
@@ -113,6 +113,6 @@ function Counter() {
         <button className="counter-primary counter-finish" disabled={!selected.length || busy} onClick={() => void finishSale()}>{busy ? "Registrando…" : "Registrar venda"}</button>
       </aside>
     </div>
-    {receipt && <div className="counter-receipt" id="counter-receipt"><h2>FRANGO SHOW ROTISSERIE</h2><p>Comprovante de venda no balcão<br/>Venda #{receipt.id}<br/>{new Date(receipt.created_at).toLocaleString("pt-BR")}</p><hr/>{receipt.items.map(item => <div key={item.product_id}><span>{item.quantity}× {item.name}</span><b>{money(Number(item.line_total))}</b></div>)}<hr/><p>Pagamento: {receipt.payment_method}</p><strong>TOTAL: {money(Number(receipt.total))}</strong><p>Obrigado pela preferência!</p></div>}
+    {receipt && <div className="counter-receipt" id="counter-receipt"><h2>FRANGO SHOW ROTISSERIE</h2><p>Comprovante de venda no balcão<br/>Venda #{receipt.id}<br/>{new Date(receipt.created_at).toLocaleString("pt-BR")}</p><hr/>{receipt.items.map(item => <div className="counter-receipt-line" key={item.product_id}><span>{item.quantity}× {item.name}<small>{item.description}</small>{item.components?.length ? <small>Composição: {item.components.map(component => (component.quantity * item.quantity) + "× " + component.name).join(" · ")}</small> : null}</span><b>{money(Number(item.line_total))}</b></div>)}<hr/><p>Pagamento: {receipt.payment_method}</p><strong>TOTAL: {money(Number(receipt.total))}</strong><p>Obrigado pela preferência!</p></div>}
   </main>;
 }
