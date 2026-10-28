@@ -14,7 +14,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as BalcaoRouteImport } from './routes/balcao'
 import { Route as CozinhaRouteImport } from './routes/cozinha'
 import { Route as PlanosRouteImport } from './routes/planos'
-import { Route as AdminPlanosRouteImport } from './routes/admin.planos'
+import { Route as AdminPlanosRouteImport } from './routes/admin_.planos'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -42,14 +42,14 @@ const PlanosRoute = PlanosRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminPlanosRoute = AdminPlanosRouteImport.update({
-  id: '/planos',
-  path: '/planos',
-  getParentRoute: () => AdminRoute,
+  id: '/admin/planos',
+  path: '/admin/planos',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
+  '/admin': typeof AdminRoute
   '/balcao': typeof BalcaoRoute
   '/cozinha': typeof CozinhaRoute
   '/planos': typeof PlanosRoute
@@ -57,7 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
+  '/admin': typeof AdminRoute
   '/balcao': typeof BalcaoRoute
   '/cozinha': typeof CozinhaRoute
   '/planos': typeof PlanosRoute
@@ -66,7 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
+  '/admin': typeof AdminRoute
   '/balcao': typeof BalcaoRoute
   '/cozinha': typeof CozinhaRoute
   '/planos': typeof PlanosRoute
@@ -90,10 +90,11 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRouteWithChildren
+  AdminRoute: typeof AdminRoute
   BalcaoRoute: typeof BalcaoRoute
   CozinhaRoute: typeof CozinhaRoute
   PlanosRoute: typeof PlanosRoute
+  AdminPlanosRoute: typeof AdminPlanosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -135,30 +136,21 @@ declare module '@tanstack/react-router' {
     }
     '/admin/planos': {
       id: '/admin/planos'
-      path: '/planos'
+      path: '/admin/planos'
       fullPath: '/admin/planos'
       preLoaderRoute: typeof AdminPlanosRouteImport
-      parentRoute: typeof AdminRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface AdminRouteChildren {
-  AdminPlanosRoute: typeof AdminPlanosRoute
-}
-
-const AdminRouteChildren: AdminRouteChildren = {
-  AdminPlanosRoute: AdminPlanosRoute,
-}
-
-const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRouteWithChildren,
+  AdminRoute: AdminRoute,
   BalcaoRoute: BalcaoRoute,
   CozinhaRoute: CozinhaRoute,
   PlanosRoute: PlanosRoute,
+  AdminPlanosRoute: AdminPlanosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
