@@ -124,12 +124,12 @@ function Index() {
   const quantityFor = (id: number) => quantities[id] ?? 1;
   const changeQuantity = (id: number, amount: number) => {
     const item = catalog.find(product => product.id === id);
-    const remaining = item?.stock_quantity == null ? 99 : Math.max(1, item.stock_quantity - (cart[id] ?? 0));
+    const remaining = item?.stock_quantity == null ? 99 : Math.min(99, Math.max(1, item.stock_quantity - (cart[id] ?? 0)));
     setQuantities(current => ({ ...current, [id]: Math.min(remaining, Math.max(1, (current[id] ?? 1) + amount)) }));
   };
   const add = (id: number, amount: number) => setCart(current => {
     const item = catalog.find(product => product.id === id);
-    const maximum = item?.stock_quantity == null ? Number.POSITIVE_INFINITY : item.stock_quantity;
+    const maximum = item?.stock_quantity == null ? 99 : Math.min(99, item.stock_quantity);
     const quantity = Math.min(maximum, Math.max(0, (current[id] ?? 0) + amount));
     const next = { ...current, [id]: quantity };
     if (!quantity) delete next[id];
