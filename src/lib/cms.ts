@@ -57,7 +57,7 @@ export async function loadPublicContent() {
     ]);
     const productRows = products as Product[];
     const componentRows = components as ComboComponent[];
-    const productById = new Map(productRows.map(product => [product.id, product]));
+    const productById = new Map<number, Product>(productRows.map(product => [product.id, product] as const));
     const productsWithAvailability = productRows.map(product => {
       if (product.category !== "Combos") return product;
       const recipe = componentRows.filter(component => component.combo_product_id === product.id);
