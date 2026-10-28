@@ -492,6 +492,7 @@
 .kitchen-header { max-width:1100px; margin:0 auto 28px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
 .kitchen-header>div:first-child { display:flex; align-items:center; gap:14px; }
 .kitchen-mark { width:48px; height:48px; display:grid; place-items:center; border-radius:14px; color:white; background:#bd201b; }
+.kitchen-logo { flex:0 0 auto; }
 .kitchen-header h1,.kitchen-login h1 { margin:0; font-size:clamp(25px,4vw,34px); }
 .kitchen-header p,.kitchen-login>p { margin:5px 0 0; color:#77716c; }
 .kitchen-header-actions { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
@@ -547,6 +548,8 @@
 .counter-header { max-width:1250px; margin:0 auto 24px; display:flex; align-items:center; gap:10px; }
 .counter-header>div { flex:1; }.counter-header h1 { margin:4px 0; font-size:clamp(27px,4vw,36px); }.counter-header p,.counter-login>p { margin:0; color:#736d66; }
 .counter-kicker { color:#ad201b; font-size:11px; font-weight:850; letter-spacing:.13em; }
+.counter-identity { display:flex; align-items:center; gap:14px; }
+.counter-identity .brand-logo { flex:0 0 auto; }
 .counter-header>a,.counter-header>button,.counter-secondary { min-height:42px; display:inline-flex; align-items:center; justify-content:center; gap:8px; border:1px solid #e1dbd4; border-radius:10px; padding:9px 13px; background:white; color:#342f2a; font-weight:700; text-decoration:none; cursor:pointer; }
 .counter-layout { max-width:1250px; margin:auto; display:grid; grid-template-columns:minmax(0,1.5fr) minmax(300px,.7fr); align-items:start; gap:20px; }
 .counter-catalog,.counter-cart { border:1px solid #e8e1da; border-radius:16px; padding:18px; background:white; box-shadow:0 6px 22px #3322110a; }
