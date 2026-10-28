@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { loadPublicContent, type Product as CmsProduct } from "@/lib/cms";
+import { createOrder, loadPublicContent, type Product as CmsProduct } from "@/lib/cms";
 import {
   ArrowLeft, ArrowRight, Check, ChevronDown, Clock3, Instagram, MapPin, Menu,
   Minus, Plus, Search, ShoppingBag, ShoppingCart, Star, Truck, X,
@@ -103,6 +103,9 @@ function Index() {
   const [checkout, setCheckout] = useState(false);
   const [fulfillment, setFulfillment] = useState<"delivery" | "pickup">("delivery");
   const [payment, setPayment] = useState("PIX");
+  const [orderBusy, setOrderBusy] = useState(false);
+  const [orderError, setOrderError] = useState("");
+  const [whatsappFallback, setWhatsappFallback] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [isOpen] = useState(openStatus);
   const shown = useMemo(() => catalog.filter((item) =>
@@ -121,41 +124,50 @@ function Index() {
     if (!next[id]) delete next[id];
     return next;
   });
-  const order = (event: FormEvent<HTMLFormElement>) => {
+  const order = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!lines.length) return;
+    if (!lines.length || orderBusy) return;
+    setOrderError(""); setWhatsappFallback("");
     const form = new FormData(event.currentTarget);
     const name = String(form.get("customerName") ?? "").trim();
     const phone = String(form.get("customerPhone") ?? "").trim();
     const notes = String(form.get("orderNotes") ?? "").trim();
-    const deliveryDetails = fulfillment === "delivery" ? [
-      "Endereço: " + String(form.get("address") ?? "").trim() + ", nº " + String(form.get("number") ?? "").trim(),
-      form.get("cep") ? "CEP: " + String(form.get("cep")).trim() : "",
-      form.get("neighborhood") ? "Bairro: " + String(form.get("neighborhood")).trim() : "",
-      form.get("complement") ? "Complemento: " + String(form.get("complement")).trim() : "",
-      form.get("reference") ? "Ponto de referência: " + String(form.get("reference")).trim() : "",
-    ].filter(Boolean) : [];
-    const orderLines = lines.map((item) => String(cart[item.id]) + "x " + item.name + " — " + brl(item.price * (cart[item.id] ?? 0)));
-    const message = [
-      "Olá! Quero finalizar meu pedido.",
-      "",
-      "Modalidade: " + (fulfillment === "delivery" ? "Delivery" : "Retirada"),
-      "Nome: " + name,
-      "Telefone: " + phone,
-      ...deliveryDetails,
-      "Forma de pagamento: " + payment,
-      notes ? "Observação: " + notes : "",
-      "",
-      "Itens do pedido:",
-      ...orderLines,
-      "",
-      "Subtotal: " + brl(total),
-      "Taxa de entrega: " + (fulfillment === "delivery" ? "A combinar" : "R$ 0,00"),
-      "Total: " + brl(total) + (fulfillment === "delivery" ? " + taxa de entrega a combinar" : ""),
-    ].filter((line) => line !== "").join("\n");
-    window.open(waLink(message), "_blank", "noopener,noreferrer");
-    setCartOpen(false);
-    setCheckout(false);
+    const address = fulfillment === "delivery" ? {
+      street: String(form.get("address") ?? "").trim(), number: String(form.get("number") ?? "").trim(),
+      cep: String(form.get("cep") ?? "").trim(), neighborhood: String(form.get("neighborhood") ?? "").trim(),
+      complement: String(form.get("complement") ?? "").trim(), reference: String(form.get("reference") ?? "").trim(),
+    } : {};
+    const popup = window.open("about:blank", "_blank");
+    setOrderBusy(true);
+    try {
+      const saved = await createOrder({
+        customer_name: name, customer_phone: phone, fulfillment, address, payment_method: payment, notes,
+        items: lines.map(item => ({ product_id: item.id, quantity: cart[item.id] ?? 0 })),
+      });
+      const deliveryDetails = fulfillment === "delivery" ? [
+        "Endereço: " + address.street + ", nº " + address.number,
+        address.cep ? "CEP: " + address.cep : "",
+        address.neighborhood ? "Bairro: " + address.neighborhood : "",
+        address.complement ? "Complemento: " + address.complement : "",
+        address.reference ? "Ponto de referência: " + address.reference : "",
+      ].filter(Boolean) : [];
+      const orderLines = saved.items.map(item => item.quantity + "x " + item.name + " — " + brl(Number(item.line_total)));
+      const message = [
+        "Olá! Pedido #" + saved.order_number, "",
+        "Modalidade: " + (fulfillment === "delivery" ? "Delivery" : "Retirada"),
+        "Nome: " + name, "Telefone: " + phone, ...deliveryDetails, "Forma de pagamento: " + payment,
+        notes ? "Observação: " + notes : "", "", "Itens do pedido:", ...orderLines, "",
+        "Subtotal: " + brl(Number(saved.subtotal)),
+        "Taxa de entrega: " + (saved.delivery_fee === null ? "A combinar" : brl(Number(saved.delivery_fee))),
+        "Total: " + brl(Number(saved.total)) + (saved.delivery_fee === null ? " + taxa de entrega a combinar" : ""),
+      ].filter(line => line !== "").join("\n");
+      const link = waLink(message);
+      if (popup) { popup.location.href = link; setCart({}); setCartOpen(false); setCheckout(false); }
+      else { setWhatsappFallback(link); }
+    } catch (e) {
+      popup?.close();
+      setOrderError(e instanceof Error ? e.message : "Não foi possível salvar o pedido. Tente novamente.");
+    } finally { setOrderBusy(false); }
   };
 
   const nav = [
@@ -393,7 +405,7 @@ function Index() {
                   <p><span>Taxa de entrega</span><b>{fulfillment === "delivery" ? "A combinar" : "R$ 0,00"}</b></p>
                   <p className="checkout-grand-total"><strong>Total</strong><strong>{brl(total)}</strong></p>
                 </div>
-                <button className="button checkout-whatsapp" type="submit">Finalizar pelo WhatsApp</button>
+                {orderError && <p className="checkout-error" role="alert">{orderError}</p>}{whatsappFallback && <div className="checkout-success" role="status"><b>Pedido registrado!</b><a href={whatsappFallback} target="_blank" rel="noreferrer">Continuar para o WhatsApp</a></div>}<button className="button checkout-whatsapp" type="submit" disabled={orderBusy || Boolean(whatsappFallback)}>{orderBusy ? "Registrando pedido..." : whatsappFallback ? "Pedido registrado" : "Finalizar pelo WhatsApp"}</button>
               </div>
             </form>
           ) : (
