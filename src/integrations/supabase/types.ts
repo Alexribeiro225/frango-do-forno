@@ -44,6 +44,54 @@ export type Database = {
         }
         Relationships: []
       }
+      orders: {
+        Row: {
+          address: Json
+          created_at: string
+          customer_name: string
+          customer_phone: string
+          delivery_fee: number | null
+          fulfillment: string
+          id: number
+          items: Json
+          notes: string
+          payment_method: string
+          status: string
+          subtotal: number
+          total: number
+        }
+        Insert: {
+          address?: Json
+          created_at?: string
+          customer_name: string
+          customer_phone: string
+          delivery_fee?: number | null
+          fulfillment: string
+          id?: number
+          items: Json
+          notes?: string
+          payment_method: string
+          status?: string
+          subtotal: number
+          total: number
+        }
+        Update: {
+          address?: Json
+          created_at?: string
+          customer_name?: string
+          customer_phone?: string
+          delivery_fee?: number | null
+          fulfillment?: string
+          id?: number
+          items?: Json
+          notes?: string
+          payment_method?: string
+          status?: string
+          subtotal?: number
+          total?: number
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category: string
@@ -127,7 +175,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_order: {
+        Args: {
+          p_address: Json
+          p_customer_name: string
+          p_customer_phone: string
+          p_fulfillment: string
+          p_items: Json
+          p_notes: string
+          p_payment_method: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
