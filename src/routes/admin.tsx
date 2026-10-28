@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { ImagePlus, LogOut, Pencil, Plus, Trash2 } from "lucide-react";
-import { configured, currentUser, deleteRow, listComboComponents, listRows, saveComboComponents, saveRow, signIn, signOut, uploadImage } from "@/lib/cms";
+import { configured, currentUser, deleteRow, getMySubscription, listComboComponents, listRows, saveComboComponents, saveRow, signIn, signOut, uploadImage } from "@/lib/cms";
 import type { Announcement, Product, Promo } from "@/lib/cms";
 
 export const Route = createFileRoute("/admin")({ component: Admin });
@@ -13,19 +13,21 @@ const blank = (tab: Tab) => tab === "products"
   : { title: "", body: "", image_url: "", is_active: true };
 
 function Admin() {
-  const [user, setUser] = useState<{email?: string} | null>(null);
+  const [user, setUser] = useState<Awaited<ReturnType<typeof currentUser>>>(null);
+  const [subscriptionCheckout, setSubscriptionCheckout] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("products");
   const [rows, setRows] = useState<Array<Product | Promo | Announcement>>([]);
   const [editing, setEditing] = useState<number | null>(null);
   const [form, setForm] = useState<Record<string, unknown>>(blank("products"));
-  const [email, setEmail] = useState("conectstore.app@gmail.com");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [comboComponents, setComboComponents] = useState<Array<{ product_id: number; quantity: number }>>([]);
   useEffect(() => { currentUser().then(setUser); }, []);
-  useEffect(() => { if (user) refresh(); }, [user, tab]);
+  useEffect(() => { if (user?.role === "master" || user?.subscriptionStatus === "active") refresh(); }, [user, tab]);
+  useEffect(() => { if (user?.role === "owner" && user.subscriptionStatus !== "active") getMySubscription().then(value => setSubscriptionCheckout(value.checkout_url)).catch(() => {}); }, [user]);
   async function refresh() { try { setRows(await listRows(tab)); } catch (e) { setError(message(e)); } }
   function message(e: unknown) { return e instanceof Error ? e.message : "Ocorreu um erro."; }
   async function login(e: FormEvent) { e.preventDefault(); setBusy(true); setError(""); try { setUser(await signIn(email, password)); } catch (e) { setError(message(e)); } finally { setBusy(false); } }
@@ -72,7 +74,8 @@ function Admin() {
     try { await deleteRow(tab, id); await refresh(); } catch (e) { setError(message(e)); }
   }
   if (!configured) return <main className="admin-page"><section className="admin-login"><span className="admin-eyebrow">FRANGO SHOW · ADMINISTRAÇÃO</span><h1>Configure o painel</h1><p>O painel foi criado. Para guardar produtos, imagens e promoções com segurança, primeiro conecte um projeto Supabase seguindo o guia incluído no repositório.</p><a className="admin-primary" href="https://github.com/Alexribeiro225/frango-do-forno/blob/main/ADMIN_SETUP.md">Ver instruções de configuração</a></section></main>;
-  if (!user) return <main className="admin-page"><form className="admin-login" onSubmit={login}><span className="admin-eyebrow">FRANGO SHOW · SUPERADMIN</span><h1>Entrar no painel</h1><p>Acesso exclusivo para conectstore.app@gmail.com.</p><label>E-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label><label>Senha<input type="password" value={password} onChange={e => setPassword(e.target.value)} required /></label>{error && <div className="admin-error">{error}</div>}<button className="admin-primary" disabled={busy}>{busy ? "Entrando..." : "Entrar"}</button></form></main>;
+  if (!user) return <main className="admin-page"><form className="admin-login" onSubmit={login}><span className="admin-eyebrow">FRANGO SHOW · GESTÃO</span><h1>Entrar no painel</h1><p>Acesse com o login da loja ou do admin master.</p><label>E-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label><label>Senha<input type="password" value={password} onChange={e => setPassword(e.target.value)} required /></label>{error && <div className="admin-error">{error}</div>}<button className="admin-primary" disabled={busy}>{busy ? "Entrando..." : "Entrar"}</button></form></main>;
+  if (user.role === "owner" && user.subscriptionStatus !== "active") return <main className="admin-page"><section className="admin-login"><span className="admin-eyebrow">FRANGO SHOW · ASSINATURA</span><h1>Ative o acesso à loja</h1><p>O pagamento ainda não foi confirmado pela Kiwify. Assim que a confirmação chegar, o painel será liberado automaticamente.</p>{subscriptionCheckout && <a className="admin-primary" href={subscriptionCheckout}>Continuar pagamento</a>}<a className="admin-logout" href="/planos">Ver planos</a><button className="admin-logout" onClick={()=>{signOut();setUser(null);}}>Sair</button></section></main>;
   const imageField = <label className="admin-image-field">Imagem<input type="file" accept="image/*" onChange={e => image(e.currentTarget.files?.[0])} /><span><ImagePlus size={18}/> Enviar imagem</span>{typeof form["image_url"] === "string" && form["image_url"] && <img src={form["image_url"]} alt="Prévia" />}</label>;
   const componentProducts = rows.filter((row): row is Product => "category" in row && row.category !== "Combos");
   function toggleComboComponent(productId: number, enabled: boolean) {
@@ -84,7 +87,7 @@ function Admin() {
     setComboComponents(current => current.map(component => component.product_id === productId ? { ...component, quantity } : component));
   }
   return <main className="admin-page"><div className="admin-wrap">
-    <header className="admin-header"><div><span className="admin-eyebrow">FRANGO SHOW · SUPERADMIN</span><h1>Painel de conteúdo</h1><p>Gerencie o que aparece na loja.</p></div><div className="admin-header-actions"><a className="admin-logout" href="/balcao">Abrir caixa</a><a className="admin-logout" href="/cozinha">Abrir cozinha</a><button className="admin-logout" onClick={() => { signOut(); setUser(null); }}><LogOut size={17}/> Sair</button></div></header>
+    <header className="admin-header"><div><span className="admin-eyebrow">{user.role === "master" ? "ADMIN MASTER" : "PAINEL DA LOJA"}</span><h1>Painel de conteúdo</h1><p>Gerencie o que aparece na loja.</p></div><div className="admin-header-actions">{user.role === "master" && <a className="admin-logout" href="/admin/planos">Planos SaaS</a>}<a className="admin-logout" href="/balcao">Abrir caixa</a><a className="admin-logout" href="/cozinha">Abrir cozinha</a><button className="admin-logout" onClick={() => { signOut(); setUser(null); }}><LogOut size={17}/> Sair</button></div></header>
     <nav className="admin-tabs">{tabs.map(t => <button key={t.id} className={tab === t.id ? "active" : ""} onClick={() => { setTab(t.id); setEditing(null); setForm(blank(t.id)); setComboComponents([]); }}>{t.label}</button>)}</nav>
     {error && <div className="admin-error">{error}</div>}{notice && <div className="admin-notice">{notice}</div>}
     <section className="admin-card" id="admin-form"><div className="admin-card-head"><h2>{editing ? "Editar" : "Adicionar"} {tabs.find(t => t.id === tab)?.label.toLowerCase()}</h2>{editing && <button onClick={fresh}>Cancelar</button>}</div>
