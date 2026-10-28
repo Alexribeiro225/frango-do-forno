@@ -108,7 +108,7 @@ function Counter() {
       <aside className="counter-cart"><h2><ShoppingCart size={20}/> Venda atual</h2>
         {!selected.length ? <p className="counter-empty">Adicione produtos para iniciar a venda.</p> : <div className="counter-cart-lines">{selected.map(product => <div className="counter-cart-line" key={product.id}>
           <div><b>{cart[product.id]}× {product.name}</b><span>{money(Number(product.price) * cart[product.id])}</span></div>
-          <button aria-label={"Remover " + product.name} onClick={() => change(product,-cart[product.id])}><Trash2 size={16}/></button>
+          <button aria-label={"Remover " + product.name} onClick={() => change(product,-(cart[product.id] ?? 0))}><Trash2 size={16}/></button>
         </div>)}</div>}
         <label className="counter-payment">Forma de pagamento<select value={payment} onChange={e => setPayment(e.target.value)}><option>PIX</option><option>Cartão</option><option>Dinheiro</option></select></label>
         <div className="counter-total"><span>Total</span><b>{money(total)}</b></div>
