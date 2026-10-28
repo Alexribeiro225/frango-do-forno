@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { ImagePlus, LogOut, Pencil, Plus, Trash2 } from "lucide-react";
-import { configured, currentUser, deleteRow, listRows, saveRow, signIn, signOut, uploadImage } from "@/lib/cms";
+import { configured, currentUser, deleteRow, listComboComponents, listRows, saveComboComponents, saveRow, signIn, signOut, uploadImage } from "@/lib/cms";
 import type { Announcement, Product, Promo } from "@/lib/cms";
 
 export const Route = createFileRoute("/admin")({ component: Admin });
@@ -23,27 +23,43 @@ function Admin() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [comboComponents, setComboComponents] = useState<Array<{ product_id: number; quantity: number }>>([]);
   useEffect(() => { currentUser().then(setUser); }, []);
   useEffect(() => { if (user) refresh(); }, [user, tab]);
   async function refresh() { try { setRows(await listRows(tab)); } catch (e) { setError(message(e)); } }
   function message(e: unknown) { return e instanceof Error ? e.message : "Ocorreu um erro."; }
   async function login(e: FormEvent) { e.preventDefault(); setBusy(true); setError(""); try { setUser(await signIn(email, password)); } catch (e) { setError(message(e)); } finally { setBusy(false); } }
-  function edit(row: Product | Promo | Announcement) {
+  async function edit(row: Product | Promo | Announcement) {
     setEditing(row.id);
     const data = { ...row } as unknown as Record<string, unknown>;
     if (tab === "products") { data["category"] = (row as Product)["category"]; data["description"] = (row as Product)["description"]; }
     if (tab === "promotions") { data["starts_at"] = (row as Promo)["starts_at"]?.slice(0, 16) || ""; data["ends_at"] = (row as Promo)["ends_at"]?.slice(0, 16) || ""; }
     setForm(data);
+    setComboComponents([]);
+    if (tab === "products" && (row as Product).category === "Combos") {
+      try {
+        const recipe = await listComboComponents(row.id);
+        setComboComponents(recipe.map(component => ({ product_id: component.component_product_id, quantity: component.quantity_per_combo })));
+      } catch (e) { setError(message(e)); }
+    }
     document.getElementById("admin-form")?.scrollIntoView({ behavior: "smooth" });
   }
-  function fresh() { setEditing(null); setForm(blank(tab)); }
+  function fresh() { setEditing(null); setForm(blank(tab)); setComboComponents([]); }
   async function submit(e: FormEvent) {
     e.preventDefault(); setBusy(true); setError(""); setNotice("");
     try {
       const payload = { ...form };
       if (tab === "products") { payload["price"] = Number(payload["price"]); payload["stock_quantity"] = payload["stock_quantity"] === "" || payload["stock_quantity"] == null ? null : Number(payload["stock_quantity"]); }
       if (tab === "promotions") { payload["starts_at"] = payload["starts_at"] || null; payload["ends_at"] = payload["ends_at"] || null; }
-      await saveRow(tab, payload, editing ?? undefined); setNotice("Alterações salvas."); fresh(); await refresh();
+      if (tab === "products" && payload["category"] === "Combos" && !comboComponents.length) throw new Error("Selecione os produtos que fazem parte do combo.");
+      const saved = await saveRow(tab, payload, editing ?? undefined);
+      if (tab === "products" && payload["category"] === "Combos") {
+        const productId = editing ?? Number(saved?.[0]?.id);
+        if (!productId) throw new Error("Produto salvo, mas não foi possível identificar o combo. Edite-o novamente para salvar a composição.");
+        setEditing(productId);
+        await saveComboComponents(productId, comboComponents);
+      }
+      setNotice("Alterações salvas."); fresh(); await refresh();
     } catch (e) { setError(message(e)); } finally { setBusy(false); }
   }
   async function image(file?: File) {
@@ -58,18 +74,30 @@ function Admin() {
   if (!configured) return <main className="admin-page"><section className="admin-login"><span className="admin-eyebrow">FRANGO SHOW · ADMINISTRAÇÃO</span><h1>Configure o painel</h1><p>O painel foi criado. Para guardar produtos, imagens e promoções com segurança, primeiro conecte um projeto Supabase seguindo o guia incluído no repositório.</p><a className="admin-primary" href="https://github.com/Alexribeiro225/frango-do-forno/blob/main/ADMIN_SETUP.md">Ver instruções de configuração</a></section></main>;
   if (!user) return <main className="admin-page"><form className="admin-login" onSubmit={login}><span className="admin-eyebrow">FRANGO SHOW · SUPERADMIN</span><h1>Entrar no painel</h1><p>Acesso exclusivo para conectstore.app@gmail.com.</p><label>E-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label><label>Senha<input type="password" value={password} onChange={e => setPassword(e.target.value)} required /></label>{error && <div className="admin-error">{error}</div>}<button className="admin-primary" disabled={busy}>{busy ? "Entrando..." : "Entrar"}</button></form></main>;
   const imageField = <label className="admin-image-field">Imagem<input type="file" accept="image/*" onChange={e => image(e.currentTarget.files?.[0])} /><span><ImagePlus size={18}/> Enviar imagem</span>{typeof form["image_url"] === "string" && form["image_url"] && <img src={form["image_url"]} alt="Prévia" />}</label>;
+  const componentProducts = rows.filter((row): row is Product => "category" in row && row.category !== "Combos");
+  function toggleComboComponent(productId: number, enabled: boolean) {
+    setComboComponents(current => enabled
+      ? [...current, { product_id: productId, quantity: 1 }]
+      : current.filter(component => component.product_id !== productId));
+  }
+  function setComboComponentQuantity(productId: number, quantity: number) {
+    setComboComponents(current => current.map(component => component.product_id === productId ? { ...component, quantity } : component));
+  }
   return <main className="admin-page"><div className="admin-wrap">
     <header className="admin-header"><div><span className="admin-eyebrow">FRANGO SHOW · SUPERADMIN</span><h1>Painel de conteúdo</h1><p>Gerencie o que aparece na loja.</p></div><div className="admin-header-actions"><a className="admin-logout" href="/balcao">Abrir caixa</a><a className="admin-logout" href="/cozinha">Abrir cozinha</a><button className="admin-logout" onClick={() => { signOut(); setUser(null); }}><LogOut size={17}/> Sair</button></div></header>
-    <nav className="admin-tabs">{tabs.map(t => <button key={t.id} className={tab === t.id ? "active" : ""} onClick={() => { setTab(t.id); setEditing(null); setForm(blank(t.id)); }}>{t.label}</button>)}</nav>
+    <nav className="admin-tabs">{tabs.map(t => <button key={t.id} className={tab === t.id ? "active" : ""} onClick={() => { setTab(t.id); setEditing(null); setForm(blank(t.id)); setComboComponents([]); }}>{t.label}</button>)}</nav>
     {error && <div className="admin-error">{error}</div>}{notice && <div className="admin-notice">{notice}</div>}
     <section className="admin-card" id="admin-form"><div className="admin-card-head"><h2>{editing ? "Editar" : "Adicionar"} {tabs.find(t => t.id === tab)?.label.toLowerCase()}</h2>{editing && <button onClick={fresh}>Cancelar</button>}</div>
       <form className="admin-form" onSubmit={submit}>
-        {tab === "products" && <><div className="admin-two"><label>Nome<input value={String(form["name"] || "")} onChange={e => setForm(f => ({...f,name:e.target.value}))} required /></label><label>Categoria<select value={String(form["category"])} onChange={e => setForm(f => ({...f,category:e.target.value}))}>{["Aves","Bovinos","Suínos","Acompanhamentos","Sobremesas","Bebidas","Combos"].map(x=><option key={x}>{x}</option>)}</select></label></div><label>Preço (R$)<input type="number" min="0" step="0.01" value={String(form["price"] ?? "")} onChange={e=>setForm(f=>({...f,price:e.target.value}))} required /></label><label>Quantidade em estoque<input type="number" min="0" step="1" inputMode="numeric" placeholder="Sem controle de estoque" value={String(form["stock_quantity"] ?? "")} onChange={e=>setForm(f=>({...f,stock_quantity:e.target.value}))} /></label><small className="admin-stock-help">Deixe vazio para não controlar. Cada pedido confirmado reduz essa quantidade automaticamente.</small><label>Descrição<textarea value={String(form["description"] || "")} onChange={e=>setForm(f=>({...f,description:e.target.value}))}/></label>{imageField}<div className="admin-checks"><label><input type="checkbox" checked={Boolean(form["is_popular"])} onChange={e=>setForm(f=>({...f,is_popular:e.target.checked}))}/> Mais pedido</label><label><input type="checkbox" checked={Boolean(form["is_active"])} onChange={e=>setForm(f=>({...f,is_active:e.target.checked}))}/> Visível na loja</label></div></>}
+        {tab === "products" && <><div className="admin-two"><label>Nome<input value={String(form["name"] || "")} onChange={e => setForm(f => ({...f,name:e.target.value}))} required /></label><label>Categoria<select value={String(form["category"])} onChange={e => setForm(f => ({...f,category:e.target.value}))}>{["Aves","Bovinos","Suínos","Acompanhamentos","Sobremesas","Bebidas","Combos"].map(x=><option key={x}>{x}</option>)}</select></label></div>{String(form["category"]) === "Combos" && <section className="combo-components-editor"><div><b>Composição do combo</b><small>Marque os itens incluídos e informe a quantidade consumida por unidade do combo.</small></div>{componentProducts.length ? componentProducts.map(product => {
+          const selected = comboComponents.find(component => component.product_id === product.id);
+          return <label className="combo-component-row" key={product.id}><input type="checkbox" checked={Boolean(selected)} disabled={!product.is_active && !selected} onChange={event => toggleComboComponent(product.id,event.currentTarget.checked)} /><span><b>{product.name}</b><small>{!product.is_active ? "Produto oculto" : product.stock_quantity === null ? "Estoque sem controle" : "Estoque atual: " + product.stock_quantity}</small></span><input type="number" min="1" max="99" step="1" disabled={!selected} value={selected?.quantity ?? ""} aria-label={"Quantidade de " + product.name + " por combo"} onChange={event => setComboComponentQuantity(product.id,Number(event.target.value))} /></label>;
+        }) : <p>Cadastre e ative produtos que não sejam combos para adicioná-los à composição.</p>}</section>}<label>Preço (R$)<input type="number" min="0" step="0.01" value={String(form["price"] ?? "")} onChange={e=>setForm(f=>({...f,price:e.target.value}))} required /></label>{String(form["category"]) === "Combos" ? <small className="admin-stock-help">O estoque do combo é calculado pelos produtos da composição abaixo.</small> : <><label>Quantidade em estoque<input type="number" min="0" step="1" inputMode="numeric" placeholder="Sem controle de estoque" value={String(form["stock_quantity"] ?? "")} onChange={e=>setForm(f=>({...f,stock_quantity:e.target.value}))} /></label><small className="admin-stock-help">Deixe vazio para não controlar. Cada pedido confirmado reduz essa quantidade automaticamente.</small></>}<label>Descrição<textarea value={String(form["description"] || "")} onChange={e=>setForm(f=>({...f,description:e.target.value}))}/></label>{imageField}<div className="admin-checks"><label><input type="checkbox" checked={Boolean(form["is_popular"])} onChange={e=>setForm(f=>({...f,is_popular:e.target.checked}))}/> Mais pedido</label><label><input type="checkbox" checked={Boolean(form["is_active"])} onChange={e=>setForm(f=>({...f,is_active:e.target.checked}))}/> Visível na loja</label></div></>}
         {tab === "promotions" && <><label>Título<input value={String(form["title"] || "")} onChange={e=>setForm(f=>({...f,title:e.target.value}))} required /></label><label>Descrição<input value={String(form["description"] || "")} onChange={e=>setForm(f=>({...f,description:e.target.value}))}/></label>{imageField}<div className="admin-two"><label>Começa em<input type="datetime-local" value={String(form["starts_at"] || "")} onChange={e=>setForm(f=>({...f,starts_at:e.target.value}))}/></label><label>Termina em<input type="datetime-local" value={String(form["ends_at"] || "")} onChange={e=>setForm(f=>({...f,ends_at:e.target.value}))}/></label></div><label className="admin-inline"><input type="checkbox" checked={Boolean(form["is_active"])} onChange={e=>setForm(f=>({...f,is_active:e.target.checked}))}/> Promoção ativa</label></>}
         {tab === "announcements" && <><label>Título<input value={String(form["title"] || "")} onChange={e=>setForm(f=>({...f,title:e.target.value}))} required /></label><label>Texto<textarea value={String(form["body"] || "")} onChange={e=>setForm(f=>({...f,body:e.target.value}))} required /></label>{imageField}<label className="admin-inline"><input type="checkbox" checked={Boolean(form["is_active"])} onChange={e=>setForm(f=>({...f,is_active:e.target.checked}))}/> Aviso ativo</label></>}
         <button className="admin-primary" disabled={busy}>{busy ? "Salvando..." : editing ? "Salvar alterações" : "Adicionar"}</button>
       </form>
     </section>
-    <section className="admin-list"><div className="admin-card-head"><h2>Itens cadastrados ({rows.length})</h2><button className="admin-add" onClick={fresh}><Plus size={17}/> Novo</button></div>{rows.length ? rows.map(row => <article className="admin-row" key={row.id}>{("image_url" in row && row.image_url) && <img src={row.image_url} alt="" />}<div><b>{"name" in row ? row.name : row.title}</b><small>{"category" in row ? row.category + " · " + new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(row.price) : "description" in row ? row.description : row.body}</small><small>{row.is_active ? "Ativo" : "Oculto"}{"name" in row && <> · {row.stock_quantity === null ? "Estoque sem controle" : "Estoque: " + row.stock_quantity}</>}</small></div><button aria-label="Editar" onClick={()=>edit(row)}><Pencil size={17}/></button><button aria-label="Excluir" onClick={()=>remove(row.id)}><Trash2 size={17}/></button></article>) : <p className="admin-empty">Nenhum item cadastrado ainda.</p>}</section>
+    <section className="admin-list"><div className="admin-card-head"><h2>Itens cadastrados ({rows.length})</h2><button className="admin-add" onClick={fresh}><Plus size={17}/> Novo</button></div>{rows.length ? rows.map(row => <article className="admin-row" key={row.id}>{("image_url" in row && row.image_url) && <img src={row.image_url} alt="" />}<div><b>{"name" in row ? row.name : row.title}</b><small>{"category" in row ? row.category + " · " + new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(row.price) : "description" in row ? row.description : row.body}</small><small>{row.is_active ? "Ativo" : "Oculto"}{"category" in row && <> · {row.category === "Combos" ? "Estoque pelos componentes" : row.stock_quantity === null ? "Estoque sem controle" : "Estoque: " + row.stock_quantity}</>}</small></div><button aria-label="Editar" onClick={()=>void edit(row)}><Pencil size={17}/></button><button aria-label="Excluir" onClick={()=>remove(row.id)}><Trash2 size={17}/></button></article>) : <p className="admin-empty">Nenhum item cadastrado ainda.</p>}</section>
   </div></main>;
 }
