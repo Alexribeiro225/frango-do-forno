@@ -41,12 +41,18 @@ function Kitchen() {
     try {
       const latest = await listOrders();
       const known = knownOrderIds.current;
-      if (known === null) knownOrderIds.current = new Set(latest.map(order => order.id));
-      else {
+      const storedLastSeen = localStorage.getItem("frango-kitchen-last-seen-order-id");
+      const maxId = latest.reduce((max, order) => Math.max(max, order.id), Number(storedLastSeen || 0));
+      if (known === null) {
+        const firstSeen = storedLastSeen === null ? [] : latest.filter(order => order.id > Number(storedLastSeen)).map(order => order.id);
+        knownOrderIds.current = new Set(latest.map(order => order.id));
+        if (autoPrintRef.current && firstSeen.length) setPrintQueue(queue => [...queue, ...firstSeen.sort((a, b) => a - b)]);
+      } else {
         const incoming = latest.filter(order => !known.has(order.id)).map(order => order.id);
         latest.forEach(order => known.add(order.id));
         if (autoPrintRef.current && incoming.length) setPrintQueue(queue => [...queue, ...incoming.reverse()]);
       }
+      if (maxId > 0) localStorage.setItem("frango-kitchen-last-seen-order-id", String(maxId));
       setOrders(latest); setUpdatedAt(new Date().toLocaleTimeString("pt-BR")); setError("");
     } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível carregar os pedidos."); }
   }, [user]);
