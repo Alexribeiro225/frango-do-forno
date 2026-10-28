@@ -67,6 +67,7 @@ begin
   end if;
   return new;
 end $$;
+revoke all on function public.create_pending_saas_subscription() from public, anon, authenticated;
 drop trigger if exists create_pending_saas_subscription on auth.users;
 create trigger create_pending_saas_subscription
   after insert on auth.users
@@ -82,6 +83,8 @@ alter table public.saas_subscriptions enable row level security;
 alter table public.kiwify_webhook_events enable row level security;
 revoke all on public.saas_plans, public.saas_subscriptions, public.kiwify_webhook_events from public, anon, authenticated;
 grant select on public.saas_plans to anon, authenticated;
+grant insert, update, delete on public.saas_plans to authenticated;
+grant usage, select on sequence public.saas_plans_id_seq to authenticated;
 grant select on public.saas_subscriptions to authenticated;
 create policy "Anyone reads active SaaS plans" on public.saas_plans
   for select to anon, authenticated using (is_active or public.is_superadmin());
