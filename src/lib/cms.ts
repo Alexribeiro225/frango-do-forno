@@ -1,4 +1,5 @@
 export type Product = { id: number; category: string; name: string; price: number; description: string; image_url: string; is_popular: boolean; is_active: boolean; stock_quantity: number | null };
+export type ComboComponent = { combo_product_id: number; component_product_id: number; quantity_per_combo: number };
 export type Promo = { id: number; title: string; description: string; image_url: string | null; starts_at: string | null; ends_at: string | null; is_active: boolean };
 export type Announcement = { id: number; title: string; body: string; image_url: string | null; is_active: boolean };
 
@@ -48,15 +49,38 @@ async function rest(table: string, query = "", init: RequestInit = {}) {
 export async function loadPublicContent() {
   if (!configured) return null;
   try {
-    const [products, promos, announcements] = await Promise.all([
+    const [products, promos, announcements, components] = await Promise.all([
       authFetch("/rest/v1/products?select=id,category,name,price,description,image_url,is_popular,is_active,stock_quantity&is_active=eq.true&order=sort_order.asc"),
       authFetch("/rest/v1/promotions?select=id,title,description,image_url,starts_at,ends_at,is_active&is_active=eq.true"),
       authFetch("/rest/v1/announcements?select=id,title,body,image_url,is_active&is_active=eq.true"),
+      authFetch("/rest/v1/combo_components?select=combo_product_id,component_product_id,quantity_per_combo"),
     ]);
-    return { products: products as Product[], promos: promos as Promo[], announcements: announcements as Announcement[] };
+    const productRows = products as Product[];
+    const componentRows = components as ComboComponent[];
+    const productById = new Map(productRows.map(product => [product.id, product]));
+    const productsWithAvailability = productRows.map(product => {
+      if (product.category !== "Combos") return product;
+      const recipe = componentRows.filter(component => component.combo_product_id === product.id);
+      if (!recipe.length) return { ...product, stock_quantity: 0 };
+      const capacities = recipe.map(component => {
+        const ingredient = productById.get(component.component_product_id);
+        if (!ingredient) return 0;
+        return ingredient.stock_quantity === null ? Number.POSITIVE_INFINITY : Math.floor(ingredient.stock_quantity / component.quantity_per_combo);
+      });
+      const available = Math.min(...capacities);
+      return { ...product, stock_quantity: Number.isFinite(available) ? available : null };
+    });
+    return { products: productsWithAvailability, promos: promos as Promo[], announcements: announcements as Announcement[] };
   } catch { return null; }
 }
 export async function listRows(table: "products" | "promotions" | "announcements") { return rest(table, "?select=*&order=created_at.desc"); }
+export async function listComboComponents(comboProductId: number) {
+  return rest("combo_components", `?select=combo_product_id,component_product_id,quantity_per_combo&combo_product_id=eq.${comboProductId}&order=component_product_id.asc`) as Promise<ComboComponent[]>;
+}
+export async function saveComboComponents(comboProductId: number, components: Array<{ product_id: number; quantity: number }>) {
+  const access = await token();
+  return authFetch("/rest/v1/rpc/save_combo_components", { method: "POST", body: JSON.stringify({ p_combo_product_id: comboProductId, p_components: components }) }, access);
+}
 export async function saveRow(table: "products" | "promotions" | "announcements", row: Record<string, unknown>, id?: number) {
   return rest(table, id ? `?id=eq.${id}` : "", { method: id ? "PATCH" : "POST", body: JSON.stringify(row) });
 }
