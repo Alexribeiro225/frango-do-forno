@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { LogOut, Minus, Plus, Printer, Search, ShoppingCart, Trash2 } from "lucide-react";
 import { configured, createCounterSale, currentUser, listRows, signIn, signOut, type Product } from "@/lib/cms";
 
@@ -22,11 +22,11 @@ function Counter() {
   const [password, setPassword] = useState("");
 
   useEffect(() => { currentUser().then(setUser).finally(() => setChecked(true)); }, []);
-  async function loadProducts() {
+  const loadProducts = useCallback(async () => {
     const rows = await listRows("products") as Product[];
     setProducts(rows.filter(product => product.is_active));
-  }
-  useEffect(() => { if (user) void loadProducts().catch(e => setError(e instanceof Error ? e.message : "Não foi possível carregar os produtos.")); }, [user]);
+  }, []);
+  useEffect(() => { if (user) void loadProducts().catch(e => setError(e instanceof Error ? e.message : "Não foi possível carregar os produtos.")); }, [user, loadProducts]);
 
   const visibleProducts = useMemo(() => products.filter(product => product.name.toLocaleLowerCase("pt-BR").includes(search.toLocaleLowerCase("pt-BR"))), [products, search]);
   const selected = products.filter(product => (cart[product.id] || 0) > 0);
@@ -54,7 +54,7 @@ function Counter() {
       const sale = await createCounterSale(payment, selected.map(product => ({ product_id: product.id, quantity: cart[product.id] })));
       setReceipt({ ...sale, created_at: new Date().toISOString() });
       setCart({});
-      await loadProducts();
+      void loadProducts().catch(() => setError("Venda registrada, mas não foi possível atualizar a lista de estoque."));
     } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível registrar a venda."); }
     finally { setBusy(false); }
   }
