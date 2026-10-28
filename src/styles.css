@@ -485,3 +485,52 @@
 .admin-error { color:#a51620; background:#fff0f0; }
 .admin-notice { color:#17653a; background:#ecfff2; }
 @media(max-width:600px){.admin-page{padding:24px 14px}.admin-header{align-items:flex-start}.admin-page h1{font-size:28px}.admin-card,.admin-list{padding:16px}.admin-form .admin-two{grid-template-columns:1fr;gap:0}.admin-row{grid-template-columns:50px minmax(0,1fr) 34px 34px;gap:7px}.admin-row>img{width:50px;height:48px}.admin-row button{width:32px;height:34px}.admin-tabs button{font-size:13px}.cms-banner{align-items:flex-start;padding:12px}.cms-banner img{width:54px;height:50px}}
+
+
+/* Cozinha e impressão de pedidos */
+.kitchen-page { min-height:100vh; padding:32px clamp(16px,4vw,56px) 60px; background:#f6f4f1; color:#292522; font-family:Arial,sans-serif; }
+.kitchen-header { max-width:1100px; margin:0 auto 28px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.kitchen-header>div:first-child { display:flex; align-items:center; gap:14px; }
+.kitchen-mark { width:48px; height:48px; display:grid; place-items:center; border-radius:14px; color:white; background:#bd201b; }
+.kitchen-header h1,.kitchen-login h1 { margin:0; font-size:clamp(25px,4vw,34px); }
+.kitchen-header p,.kitchen-login>p { margin:5px 0 0; color:#77716c; }
+.kitchen-header-actions { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+.kitchen-header-actions button,.kitchen-order-actions button { min-height:40px; display:inline-flex; align-items:center; justify-content:center; gap:8px; border:1px solid #ded9d3; border-radius:10px; padding:8px 13px; background:white; color:#332f2b; font-weight:700; cursor:pointer; }
+.kitchen-refresh-label { color:#77716c; font-size:13px; }
+.kitchen-orders { max-width:1100px; margin:auto; display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr)); align-items:start; gap:18px; }
+.kitchen-order { padding:20px; border:1px solid #e5dfd8; border-radius:16px; background:white; box-shadow:0 5px 18px #3928190b; break-inside:avoid; }
+.kitchen-order-top,.kitchen-order-top>div { display:flex; align-items:center; gap:10px; }
+.kitchen-order-top { justify-content:space-between; border-bottom:1px solid #eee9e4; padding-bottom:13px; }
+.kitchen-order-top time { display:flex; align-items:center; gap:5px; color:#77716c; font-size:12px; }
+.kitchen-order-number { font-size:20px; font-weight:800; }
+.kitchen-status { border-radius:99px; padding:5px 9px; background:#fff2d5; color:#875b00; font-size:12px; font-weight:750; }
+.status-preparing { background:#e8efff; color:#264e9b; }.status-ready { background:#e3f7e8; color:#176b34; }.status-completed { background:#eeeae5; color:#655f58; }.status-cancelled { background:#ffe8e6; color:#a02c25; }
+.kitchen-order-customer { display:grid; gap:5px; padding:14px 0; }
+.kitchen-order-customer>b { font-size:18px; }.kitchen-order-customer a { color:#9e1b17; }.kitchen-order-customer span { margin-top:3px; }
+.kitchen-address,.kitchen-items { display:grid; gap:7px; padding:12px 0; border-top:1px solid #eee9e4; }.kitchen-address span { color:#4c4741; }
+.kitchen-item { display:flex; justify-content:space-between; gap:10px; font-size:14px; }.kitchen-item strong { color:#a51e1b; }
+.kitchen-notes { margin-top:5px; border-radius:9px; padding:10px; background:#fff8e9; font-size:14px; }
+.kitchen-total { display:grid; grid-template-columns:1fr auto; gap:8px 12px; margin-top:13px; padding-top:13px; border-top:1px dashed #d9d1c8; }.kitchen-total span { color:#77716c; }.kitchen-total strong { color:#bd201b; font-size:17px; }
+.kitchen-order-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:17px; }.kitchen-order-actions .kitchen-primary,.kitchen-primary { display:inline-flex; justify-content:center; align-items:center; border:0; border-radius:10px; padding:11px 15px; color:white; background:#bd201b; font-weight:750; cursor:pointer; }.kitchen-order-actions .kitchen-primary { margin-left:auto; }.kitchen-order-actions .kitchen-print { border-color:#bd201b; color:#a51e1b; }.kitchen-order-actions .kitchen-cancel { color:#a02c25; }
+.kitchen-empty { grid-column:1/-1; display:grid; justify-items:center; gap:10px; padding:70px 20px; color:#77716c; text-align:center; }.kitchen-empty b { color:#292522; font-size:19px; }
+.kitchen-login-wrap { display:grid; place-items:center; }.kitchen-login { width:min(420px,100%); display:grid; gap:16px; padding:30px; border:1px solid #e5dfd8; border-radius:18px; background:white; box-shadow:0 10px 35px #39281910; }.kitchen-login>svg { color:#bd201b; }.kitchen-login label { display:grid; gap:7px; font-weight:700; }.kitchen-login input { min-height:44px; border:1px solid #ded9d3; border-radius:9px; padding:10px 12px; background:white; }.kitchen-error { margin:0; color:#a02c25; }.kitchen-alert { max-width:1100px; margin:0 auto 16px; }
+.checkout-error { margin:0; color:#a02c25; font-size:14px; }.checkout-success { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; padding:12px; border-radius:10px; background:#e8f7ed; color:#176b34; }.checkout-success a { color:#176b34; font-weight:750; }
+@media(max-width:700px) { .kitchen-page{padding:20px 13px 40px}.kitchen-header{align-items:flex-start;flex-direction:column}.kitchen-header-actions{width:100%}.kitchen-refresh-label{width:100%}.kitchen-orders{grid-template-columns:minmax(0,1fr)}.kitchen-order{padding:15px}.kitchen-order-top{align-items:flex-start;flex-direction:column}.kitchen-order-actions .kitchen-primary{margin-left:0} }
+@media print {
+  @page { size:80mm auto; margin:4mm; }
+  body.printing-kitchen-order { background:white!important; }
+  body.printing-kitchen-order>* { display:none!important; }
+  body.printing-kitchen-order #root { display:block!important; }
+  body.printing-kitchen-order .kitchen-page { display:block!important; padding:0!important; min-height:0!important; background:white!important; }
+  body.printing-kitchen-order .kitchen-header,body.printing-kitchen-order .kitchen-alert { display:none!important; }
+  body.printing-kitchen-order .kitchen-orders { display:block!important; }
+  body.printing-kitchen-order .kitchen-order:not(.print-current) { display:none!important; }
+  body.printing-kitchen-order .kitchen-order.print-current { display:block!important; width:100%!important; padding:0!important; border:0!important; box-shadow:none!important; color:#000!important; font:12px/1.35 Arial,sans-serif!important; }
+  body.printing-kitchen-order .kitchen-order-top { align-items:flex-start!important; flex-direction:column!important; }
+  body.printing-kitchen-order .kitchen-order-number { font-size:19px!important; }
+  body.printing-kitchen-order .kitchen-order-customer { padding:10px 0!important; }
+  body.printing-kitchen-order .kitchen-order-customer a { color:#000!important; text-decoration:none!important; }
+  body.printing-kitchen-order .kitchen-status { border:1px solid #777!important; background:#fff!important; color:#000!important; }
+  body.printing-kitchen-order .kitchen-order-actions { display:none!important; }
+  body.printing-kitchen-order .kitchen-total strong { color:#000!important; font-size:15px!important; }
+}
