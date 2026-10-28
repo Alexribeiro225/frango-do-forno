@@ -75,7 +75,7 @@ export async function uploadImage(file: File) {
 export type OrderItem = { product_id: number; name: string; category: string; quantity: number; unit_price: number; line_total: number };
 export type KitchenOrder = {
   id: number; created_at: string; customer_name: string; customer_phone: string;
-  fulfillment: "delivery" | "pickup"; address: Record<string, string>;
+  fulfillment: "delivery" | "pickup" | "counter"; address: Record<string, string>;
   payment_method: string; notes: string; items: OrderItem[];
   subtotal: number; delivery_fee: number | null; total: number;
   status: "new" | "preparing" | "ready" | "completed" | "cancelled";
@@ -92,8 +92,15 @@ export async function createOrder(input: {
   }) }) as Promise<{ id: number; order_number: number; items: OrderItem[]; subtotal: number; delivery_fee: number | null; total: number }>;
 }
 export async function listOrders() {
-  return rest("orders", "?select=*&order=created_at.desc&limit=100") as Promise<KitchenOrder[]>;
+  return rest("orders", "?select=*&fulfillment=neq.counter&order=created_at.desc&limit=100") as Promise<KitchenOrder[]>;
 }
 export async function updateOrderStatus(id: number, status: KitchenOrder["status"]) {
   return rest("orders", `?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
+}
+
+export async function createCounterSale(payment_method: string, items: Array<{ product_id: number; quantity: number }>) {
+  return rest("rpc/create_counter_sale", "", {
+    method: "POST",
+    body: JSON.stringify({ p_payment_method: payment_method, p_items: items }),
+  }) as Promise<{ id: number; order_number: number; items: OrderItem[]; subtotal: number; total: number; payment_method: string }>;
 }
