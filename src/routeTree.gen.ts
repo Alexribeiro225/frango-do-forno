@@ -12,6 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CozinhaRouteImport } from './routes/cozinha'
+import { Route as BalcaoRouteImport } from './routes/balcao'
+import { Route as PlanosRouteImport } from './routes/planos'
+import { Route as AdminPlanosRouteImport } from './routes/admin.planos'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +31,50 @@ const CozinhaRoute = CozinhaRouteImport.update({
   path: '/cozinha',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BalcaoRoute = BalcaoRouteImport.update({ id: '/balcao', path: '/balcao', getParentRoute: () => rootRouteImport } as any)
+const PlanosRoute = PlanosRouteImport.update({ id: '/planos', path: '/planos', getParentRoute: () => rootRouteImport } as any)
+const AdminPlanosRoute = AdminPlanosRouteImport.update({ id: '/admin/planos', path: '/admin/planos', getParentRoute: () => rootRouteImport } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/cozinha': typeof CozinhaRoute
+  '/balcao': typeof BalcaoRoute
+  '/planos': typeof PlanosRoute
+  '/admin/planos': typeof AdminPlanosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/cozinha': typeof CozinhaRoute
+  '/balcao': typeof BalcaoRoute
+  '/planos': typeof PlanosRoute
+  '/admin/planos': typeof AdminPlanosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/cozinha': typeof CozinhaRoute
+  '/balcao': typeof BalcaoRoute
+  '/planos': typeof PlanosRoute
+  '/admin/planos': typeof AdminPlanosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/cozinha'
+  fullPaths: '/' | '/admin' | '/cozinha' | '/balcao' | '/planos' | '/admin/planos'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/cozinha'
-  id: '__root__' | '/' | '/admin' | '/cozinha'
+  to: '/' | '/admin' | '/cozinha' | '/balcao' | '/planos' | '/admin/planos'
+  id: '__root__' | '/' | '/admin' | '/cozinha' | '/balcao' | '/planos' | '/admin/planos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   CozinhaRoute: typeof CozinhaRoute
+  BalcaoRoute: typeof BalcaoRoute
+  PlanosRoute: typeof PlanosRoute
+  AdminPlanosRoute: typeof AdminPlanosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -75,13 +93,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/cozinha': {
-      id: '/cozinha'
-      path: '/cozinha'
-      fullPath: '/cozinha'
-      preLoaderRoute: typeof CozinhaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+    '/cozinha': { id: '/cozinha'; path: '/cozinha'; fullPath: '/cozinha'; preLoaderRoute: typeof CozinhaRouteImport; parentRoute: typeof rootRouteImport }
+    '/balcao': { id: '/balcao'; path: '/balcao'; fullPath: '/balcao'; preLoaderRoute: typeof BalcaoRouteImport; parentRoute: typeof rootRouteImport }
+    '/planos': { id: '/planos'; path: '/planos'; fullPath: '/planos'; preLoaderRoute: typeof PlanosRouteImport; parentRoute: typeof rootRouteImport }
+    '/admin/planos': { id: '/admin/planos'; path: '/admin/planos'; fullPath: '/admin/planos'; preLoaderRoute: typeof AdminPlanosRouteImport; parentRoute: typeof rootRouteImport }
   }
 }
 
@@ -89,6 +104,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   CozinhaRoute: CozinhaRoute,
+  BalcaoRoute: BalcaoRoute,
+  PlanosRoute: PlanosRoute,
+  AdminPlanosRoute: AdminPlanosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

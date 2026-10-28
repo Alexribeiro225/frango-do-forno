@@ -7,7 +7,9 @@ const url = import.meta.env["VITE_SUPABASE_URL"]?.replace(/\/$/, "");
 const anon = import.meta.env["VITE_SUPABASE_ANON_KEY"] || import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
 export const configured = Boolean(url && anon);
 const storageKey = "frango-show-admin-session";
-type Session = { access_token: string; refresh_token: string; expires_at: number; user: { email?: string } };
+export type AppUser = { id: string; email?: string; role: "master" | "owner"; subscriptionStatus: string };
+export type SaaSPlan = { id: number; name: string; description: string; price: number; billing_interval: string; checkout_url: string; kiwify_product_id: string | null; features: string[]; is_active: boolean; sort_order: number };
+type Session = { access_token: string; refresh_token: string; expires_at: number; user: { id: string; email?: string } };
 const getSession = (): Session | null => {
   try { return JSON.parse(localStorage.getItem(storageKey) || "null"); } catch { return null; }
 };
@@ -19,11 +21,20 @@ async function authFetch(path: string, init: RequestInit = {}, token?: string) {
   if (!response.ok) throw new Error(data.msg || data.message || data.error_description || data.error || "Não foi possível concluir a operação.");
   return data;
 }
-export async function signIn(email: string, password: string) {
-  if (email.trim().toLowerCase() !== "conectstore.app@gmail.com") throw new Error("Este e-mail não tem acesso de superadministrador.");
+export async function signIn(email: string, password: string): Promise<AppUser> {
   const data = await authFetch("/auth/v1/token?grant_type=password", { method: "POST", body: JSON.stringify({ email, password }) });
   const session = { access_token: data.access_token, refresh_token: data.refresh_token, expires_at: Date.now() + Number(data.expires_in || 3600) * 1000, user: data.user };
-  saveSession(session); return session.user;
+  saveSession(session);
+  const user = await currentUser();
+  if (!user) throw new Error("Não foi possível validar o acesso desta conta.");
+  return user;
+}
+export async function signUpForPlan(email: string, password: string, planId: number) {
+  const data = await authFetch("/auth/v1/signup", { method: "POST", body: JSON.stringify({ email, password, data: { saas_plan_id: planId } }) });
+  if (data.access_token && data.refresh_token && data.user) {
+    saveSession({ access_token: data.access_token, refresh_token: data.refresh_token, expires_at: Date.now() + Number(data.expires_in || 3600) * 1000, user: data.user });
+  }
+  return { email: data.user?.email || email, confirmationRequired: !data.access_token };
 }
 export function signOut() { saveSession(null); }
 async function token() {
@@ -34,13 +45,27 @@ async function token() {
     session = { access_token: data.access_token, refresh_token: data.refresh_token, expires_at: Date.now() + Number(data.expires_in || 3600) * 1000, user: data.user };
     saveSession(session);
   }
-  if (session.user.email?.toLowerCase() !== "conectstore.app@gmail.com") throw new Error("Esta conta não tem acesso de superadministrador.");
   return session.access_token;
 }
-export async function currentUser() {
+export async function currentUser(): Promise<AppUser | null> {
   const session = getSession();
-  if (!session || session.user.email?.toLowerCase() !== "conectstore.app@gmail.com") return null;
-  try { await token(); return session.user; } catch { saveSession(null); return null; }
+  if (!session?.user?.id) return null;
+  try {
+    const access = await token();
+    const email = session.user.email || "";
+    if (email.toLowerCase() === "conectstore.app@gmail.com") return { id: session.user.id, email, role: "master", subscriptionStatus: "active" };
+    const rows = await authFetch("/rest/v1/saas_subscriptions?select=status&user_id=eq." + encodeURIComponent(session.user.id) + "&limit=1", {}, access) as Array<{ status: string }>;
+    return { id: session.user.id, email, role: "owner", subscriptionStatus: rows[0]?.status || "pending" };
+  } catch { saveSession(null); return null; }
+}
+export async function getMySubscription() {
+  const access = await token();
+  const session = getSession()!;
+  const rows = await authFetch("/rest/v1/saas_subscriptions?select=status,plan_id&user_id=eq." + encodeURIComponent(session.user.id) + "&limit=1", {}, access) as Array<{ status: string; plan_id: number | null }>;
+  const subscription = rows[0];
+  if (!subscription?.plan_id) return { status: subscription?.status || "pending", checkout_url: null as string | null };
+  const plans = await authFetch("/rest/v1/saas_plans?select=checkout_url&id=eq." + subscription.plan_id + "&limit=1", {}, access) as Array<{ checkout_url: string }>;
+  return { status: subscription.status, checkout_url: plans[0]?.checkout_url || null };
 }
 async function rest(table: string, query = "", init: RequestInit = {}) {
   const access = await token();
@@ -74,6 +99,14 @@ export async function loadPublicContent() {
   } catch { return null; }
 }
 export async function listRows(table: "products" | "promotions" | "announcements") { return rest(table, "?select=*&order=created_at.desc"); }
+export async function listActivePlans() {
+  return authFetch("/rest/v1/saas_plans?select=id,name,description,price,billing_interval,checkout_url,kiwify_product_id,features,is_active,sort_order&is_active=eq.true&order=sort_order.asc") as Promise<SaaSPlan[]>;
+}
+export async function listPlans() { return rest("saas_plans", "?select=*&order=sort_order.asc") as Promise<SaaSPlan[]>; }
+export async function savePlan(row: Partial<SaaSPlan>, id?: number) {
+  return rest("saas_plans", id ? "?id=eq." + id : "", { method: id ? "PATCH" : "POST", body: JSON.stringify(row) });
+}
+export async function deletePlan(id: number) { return rest("saas_plans", "?id=eq." + id, { method: "DELETE" }); }
 export async function listComboComponents(comboProductId: number) {
   return rest("combo_components", `?select=combo_product_id,component_product_id,quantity_per_combo&combo_product_id=eq.${comboProductId}&order=component_product_id.asc`) as Promise<ComboComponent[]>;
 }
