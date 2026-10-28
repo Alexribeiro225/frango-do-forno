@@ -1,4 +1,4 @@
-export type Product = { id: number; category: string; name: string; price: number; description: string; image_url: string; is_popular: boolean; is_active: boolean };
+export type Product = { id: number; category: string; name: string; price: number; description: string; image_url: string; is_popular: boolean; is_active: boolean; stock_quantity: number | null };
 export type Promo = { id: number; title: string; description: string; image_url: string | null; starts_at: string | null; ends_at: string | null; is_active: boolean };
 export type Announcement = { id: number; title: string; body: string; image_url: string | null; is_active: boolean };
 
@@ -49,7 +49,7 @@ export async function loadPublicContent() {
   if (!configured) return null;
   try {
     const [products, promos, announcements] = await Promise.all([
-      authFetch("/rest/v1/products?select=id,category,name,price,description,image_url,is_popular,is_active&is_active=eq.true&order=sort_order.asc"),
+      authFetch("/rest/v1/products?select=id,category,name,price,description,image_url,is_popular,is_active,stock_quantity&is_active=eq.true&order=sort_order.asc"),
       authFetch("/rest/v1/promotions?select=id,title,description,image_url,starts_at,ends_at,is_active&is_active=eq.true"),
       authFetch("/rest/v1/announcements?select=id,title,body,image_url,is_active&is_active=eq.true"),
     ]);
