@@ -44,6 +44,57 @@ export type Database = {
         }
         Relationships: []
       }
+      combo_components: {
+        Row: {
+          combo_product_id: number
+          component_product_id: number
+          quantity_per_combo: number
+        }
+        Insert: {
+          combo_product_id: number
+          component_product_id: number
+          quantity_per_combo: number
+        }
+        Update: {
+          combo_product_id?: number
+          component_product_id?: number
+          quantity_per_combo?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "combo_components_combo_product_id_fkey"
+            columns: ["combo_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "combo_components_component_product_id_fkey"
+            columns: ["component_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kiwify_webhook_events: {
+        Row: {
+          event_id: string
+          event_type: string
+          processed_at: string
+        }
+        Insert: {
+          event_id: string
+          event_type: string
+          processed_at?: string
+        }
+        Update: {
+          event_id?: string
+          event_type?: string
+          processed_at?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           address: Json
@@ -104,6 +155,7 @@ export type Database = {
           name: string
           price: number
           sort_order: number
+          stock_quantity: number | null
           updated_at: string
         }
         Insert: {
@@ -117,6 +169,7 @@ export type Database = {
           name: string
           price: number
           sort_order?: number
+          stock_quantity?: number | null
           updated_at?: string
         }
         Update: {
@@ -130,6 +183,7 @@ export type Database = {
           name?: string
           price?: number
           sort_order?: number
+          stock_quantity?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -170,11 +224,109 @@ export type Database = {
         }
         Relationships: []
       }
+      saas_plans: {
+        Row: {
+          billing_interval: string
+          checkout_url: string
+          created_at: string
+          description: string
+          features: Json
+          id: number
+          is_active: boolean
+          kiwify_product_id: string | null
+          name: string
+          price: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          billing_interval?: string
+          checkout_url: string
+          created_at?: string
+          description?: string
+          features?: Json
+          id?: number
+          is_active?: boolean
+          kiwify_product_id?: string | null
+          name: string
+          price: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          billing_interval?: string
+          checkout_url?: string
+          created_at?: string
+          description?: string
+          features?: Json
+          id?: number
+          is_active?: boolean
+          kiwify_product_id?: string | null
+          name?: string
+          price?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      saas_subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          customer_email: string
+          plan_id: number | null
+          provider: string
+          provider_subscription_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          customer_email: string
+          plan_id?: number | null
+          provider?: string
+          provider_subscription_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          customer_email?: string
+          plan_id?: number | null
+          provider?: string
+          provider_subscription_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saas_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "saas_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      apply_kiwify_subscription_event: {
+        Args: { p_event: Json }
+        Returns: string
+      }
+      consume_combo_inventory: { Args: { p_items: Json }; Returns: undefined }
+      create_counter_sale: {
+        Args: { p_items: Json; p_payment_method: string }
+        Returns: Json
+      }
       create_order: {
         Args: {
           p_address: Json
@@ -186,6 +338,12 @@ export type Database = {
           p_payment_method: string
         }
         Returns: Json
+      }
+      has_active_saas_subscription: { Args: never; Returns: boolean }
+      is_superadmin: { Args: never; Returns: boolean }
+      save_combo_components: {
+        Args: { p_combo_product_id: number; p_components: Json }
+        Returns: undefined
       }
     }
     Enums: {
