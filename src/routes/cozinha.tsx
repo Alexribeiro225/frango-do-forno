@@ -25,6 +25,7 @@ function Kitchen() {
   const [updatedAt, setUpdatedAt] = useState("");
   const [autoPrint, setAutoPrint] = useState(true);
   const [printQueue, setPrintQueue] = useState<number[]>([]);
+  const [printPulse, setPrintPulse] = useState(0);
   const knownOrderIds = useRef<Set<number> | null>(null);
   const autoPrintRef = useRef(true);
   const printingRef = useRef(false);
@@ -82,6 +83,7 @@ function Kitchen() {
       window.removeEventListener("afterprint", cleanup);
       printingRef.current = false;
       onFinished?.();
+      setPrintPulse(pulse => pulse + 1);
     };
     window.addEventListener("afterprint", cleanup);
     window.print();
@@ -91,10 +93,11 @@ function Kitchen() {
   useEffect(() => {
     if (!user || !autoPrint || !printQueue.length || printingRef.current) return;
     const timer = window.setTimeout(() => {
-      printOrder(printQueue[0], () => setPrintQueue(queue => queue.slice(1)));
+      const started = printOrder(printQueue[0], () => setPrintQueue(queue => queue.slice(1)));
+      if (!started) setPrintPulse(pulse => pulse + 1);
     }, 500);
     return () => window.clearTimeout(timer);
-  }, [user, autoPrint, printQueue, printOrder]);
+  }, [user, autoPrint, printQueue, printPulse, printOrder]);
 
   if (!checked) return <main className="kitchen-page"><p>Verificando acesso…</p></main>;
   if (!user) return <main className="kitchen-page kitchen-login-wrap">
