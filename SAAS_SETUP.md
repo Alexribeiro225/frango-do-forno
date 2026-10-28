@@ -18,4 +18,4 @@ Esta branch prepara o banco para um produto SaaS de uma única loja: o admin mas
 4. Na Kiwify, cadastrar a URL HTTPS `https://<project-ref>.supabase.co/functions/v1/kiwify-webhook?token=<mesmo-segredo>` e selecionar compra aprovada, renovação, atraso, cancelamento, reembolso e chargeback.
 5. Cadastrar cada plano com seu link de checkout e ID de produto Kiwify. Os eventos de compra precisam trazer o mesmo e-mail usado pelo assinante ao criar o login.
 
-A tela de planos/cadastro ainda precisa ser conectada a esses dados e deve ser publicada junto com a próxima etapa. Não aplique a migration nem cadastre o webhook antes de revisar a tela de cadastro e os secrets, para evitar bloquear o acesso atual.
+As telas de planos, cadastro e administração estão nesta branch e ainda precisam entrar na versão publicada. O endpoint de webhook também ainda precisa ser implantado e configurado. Até lá, nenhum plano foi criado e nenhum assinante foi ativado.
