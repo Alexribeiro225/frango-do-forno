@@ -574,3 +574,7 @@
 .combo-components-editor>div:first-child { display:grid; gap:4px; }.combo-components-editor>div:first-child>b { color:#8f211c; }.combo-components-editor>div:first-child>small { color:#746c65; font-size:13px; }
 .admin-form .combo-component-row { display:grid; grid-template-columns:20px minmax(0,1fr) 78px; align-items:center; gap:10px; margin:0; padding:8px 0; border-top:1px solid #eee5dd; }
 .combo-component-row>input[type=checkbox] { width:17px; height:17px; accent-color:#bd201b; }.combo-component-row>span { display:grid; gap:3px; }.combo-component-row>span>b { font-size:14px; }.combo-component-row>span>small { color:#77716c; font-size:12px; }.admin-form .combo-component-row>input[type=number] { min-height:38px; padding:7px; }
+
+.kitchen-item-wrap { display:grid; gap:4px; padding:7px 0; border-bottom:1px dashed #eee9e4; }.kitchen-item-wrap .kitchen-item { border:0; padding:0; }.kitchen-item-description,.kitchen-item-components { display:block; color:#5f5953; font-size:12px; line-height:1.35; }.kitchen-item-components { color:#8b2a24; font-weight:650; }
+.counter-product-description { display:-webkit-box; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-height:1.25; }.counter-receipt-line>span { display:grid; gap:3px; }.counter-receipt-line small { display:block; color:#333; font-size:10px; font-weight:400; }
+@media print { .counter-receipt-line { align-items:flex-start; }.counter-receipt-line>span { max-width:70%; }.counter-receipt-line small { line-height:1.25; } }
