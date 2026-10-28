@@ -4,6 +4,7 @@ import { ChefHat, Clock3, LogOut, Printer, RefreshCw } from "lucide-react";
 import { configured, currentUser, listOrders, signIn, signOut, updateOrderStatus, type KitchenOrder } from "@/lib/cms";
 
 export const Route = createFileRoute("/cozinha")({ component: Kitchen });
+const logoImg = "/images/frango-show-logo.webp";
 
 const money = (value: number) => Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const time = (value: string) => new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
@@ -123,7 +124,7 @@ function Kitchen() {
 
   return <main className="kitchen-page">
     <header className="kitchen-header">
-      <div><span className="kitchen-mark"><ChefHat /></span><div><h1>Painel da cozinha</h1><p>Pedidos recebidos pelo site · Atualiza a cada 10 segundos · Impressão automática {autoPrint ? "ligada" : "desligada"}</p></div></div>
+      <div><img src={logoImg} alt="" className="brand-logo kitchen-logo" /><div><h1>Painel da cozinha</h1><p>Pedidos recebidos pelo site · Atualiza a cada 10 segundos · Impressão automática {autoPrint ? "ligada" : "desligada"}</p></div></div>
       <div className="kitchen-header-actions"><span className="kitchen-refresh-label">{updatedAt ? "Atualizado às " + updatedAt : "Carregando…"}</span><label className="kitchen-auto-print"><input type="checkbox" checked={autoPrint} onChange={event => { const enabled = event.currentTarget.checked; autoPrintRef.current = enabled; setAutoPrint(enabled); localStorage.setItem("frango-kitchen-auto-print", String(enabled)); if (!enabled) setPrintQueue([]); }} /><Printer size={16} /> Impressão automática</label><button onClick={() => void refresh()} aria-label="Atualizar pedidos"><RefreshCw size={17} /> Atualizar</button><button onClick={() => { signOut(); setUser(null); }}><LogOut size={17} /> Sair</button></div>
     </header>
     {error && <p className="kitchen-error kitchen-alert" role="alert">{error}</p>}
