@@ -114,6 +114,13 @@ function Index() {
   const lines = catalog.filter((item) => (cart[item.id] ?? 0) > 0);
   const total = lines.reduce((sum, item) => sum + item.price * (cart[item.id] ?? 0), 0);
   const count = lines.reduce((sum, item) => sum + (cart[item.id] ?? 0), 0);
+  const openCheckout = () => {
+    const hasItems = lines.length > 0;
+    setCheckout(hasItems);
+    setWhatsappFallback("");
+    setOrderError("");
+    setCartOpen(true);
+  };
   const quantityFor = (id: number) => quantities[id] ?? 1;
   const changeQuantity = (id: number, amount: number) => setQuantities((current) => ({
     ...current,
@@ -211,7 +218,7 @@ function Index() {
           </a>
           <nav className="desktop-nav" aria-label="Navegação principal">{nav.map(([label, href]) => <a key={href} href={href}>{label}</a>)}</nav>
           <div className="header-actions">
-            <a href={waLink()} target="_blank" rel="noreferrer" className="button button-primary header-order">Pedir agora</a>
+            <button type="button" className="button button-primary header-order" onClick={openCheckout}>{count > 0 ? "Finalizar pedido" : "Pedir agora"}</button>
             <button className="cart-button" aria-label={`Abrir carrinho, ${count} itens`} onClick={() => setCartOpen(true)}>
               <ShoppingCart size={20} /><span>Carrinho</span>{count > 0 && <b>{count}</b>}
             </button>
@@ -412,7 +419,7 @@ function Index() {
             <>
               <div className="cart-lines">{lines.map((item) => <div className="cart-line" key={item.id}><img src={item.img} alt="" /><div className="cart-line-copy"><b>{item.name}</b><span>{brl(item.price)}</span><div className="quantity-control"><button aria-label="Remover uma unidade" onClick={() => add(item.id, -1)}><Minus size={14} /></button><span>{cart[item.id]}</span><button aria-label="Adicionar uma unidade" onClick={() => add(item.id, 1)}><Plus size={14} /></button></div></div><strong>{brl(item.price * (cart[item.id] ?? 0))}</strong></div>)}</div>
               <div className="cart-total"><span>Total</span><b>{brl(total)}</b></div>
-              <button className="button button-primary checkout-button" onClick={() => setCheckout(true)}>Continuar para finalizar <ArrowRight size={17} /></button>
+              <button className="button button-primary checkout-button" disabled={count === 0} onClick={() => { if (count > 0) setCheckout(true); }}>Continuar para finalizar <ArrowRight size={17} /></button>
             </>
           ) : (
             <div className="cart-empty"><ShoppingBag size={36} /><b>Seu carrinho está vazio</b><p>Escolha seus pratos favoritos no cardápio.</p><button className="button button-primary" onClick={() => { setCartOpen(false); document.getElementById("cardapio")?.scrollIntoView({ behavior: "smooth" }); }}>Ver cardápio</button></div>
