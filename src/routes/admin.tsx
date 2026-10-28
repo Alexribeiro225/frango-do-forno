@@ -107,7 +107,7 @@ function Admin() {
   }
   return <main className="admin-page saas-admin-page">
     <aside className="saas-sidebar">
-      <a className="saas-brand" href="/" aria-label="Frango Show, abrir loja"><span className="saas-brand-mark"><Utensils size={22}/></span><span><b>FRANGO SHOW</b><small>PAINEL DA LOJA</small></span></a>
+      <a className="saas-brand" href="/" aria-label="Frango Show, abrir loja"><img src="/images/frango-show-logo.webp" alt="" className="saas-brand-logo" /><span><b>FRANGO SHOW</b><small>ROTISSERIE · PAINEL</small></span></a>
       <div className="saas-nav-group"><span>OPERAÇÃO</span>
         <button className={section === "dashboard" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => setSection("dashboard")}><LayoutDashboard size={19}/> Visão geral</button>
         <a className="saas-nav-item" href="/cozinha"><ChefHat size={19}/> Pedidos e cozinha</a>
