@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { ImagePlus, LogOut, Pencil, Plus, Trash2 } from "lucide-react";
-import { configured, currentUser, deleteRow, getMySubscription, listComboComponents, listRows, saveComboComponents, saveRow, signIn, signOut, uploadImage } from "@/lib/cms";
-import type { Announcement, Product, Promo } from "@/lib/cms";
+import { AlertTriangle, ArrowRight, BarChart3, ChefHat, CircleDollarSign, Clock3, CreditCard, ImagePlus, LayoutDashboard, LogOut, Megaphone, Package, Pencil, Plus, ShoppingBag, Store, Trash2, Utensils } from "lucide-react";
+import { configured, currentUser, deleteRow, getMySubscription, listComboComponents, listOrders, listRows, saveComboComponents, saveRow, signIn, signOut, uploadImage } from "@/lib/cms";
+import type { Announcement, KitchenOrder, Product, Promo } from "@/lib/cms";
 
 export const Route = createFileRoute("/admin")({ component: Admin });
 type Tab = "products" | "promotions" | "announcements";
@@ -16,6 +16,9 @@ function Admin() {
   const [user, setUser] = useState<Awaited<ReturnType<typeof currentUser>>>(null);
   const [subscriptionCheckout, setSubscriptionCheckout] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("products");
+  const [section, setSection] = useState<"dashboard" | Tab>("dashboard");
+  const [orders, setOrders] = useState<KitchenOrder[]>([]);
+  const [dashboardProducts, setDashboardProducts] = useState<Product[]>([]);
   const [rows, setRows] = useState<Array<Product | Promo | Announcement>>([]);
   const [editing, setEditing] = useState<number | null>(null);
   const [form, setForm] = useState<Record<string, unknown>>(blank("products"));
@@ -28,6 +31,13 @@ function Admin() {
   useEffect(() => { currentUser().then(setUser); }, []);
   useEffect(() => { if (user?.role === "master" || user?.subscriptionStatus === "active") refresh(); }, [user, tab]);
   useEffect(() => { if (user?.role === "owner" && user.subscriptionStatus !== "active") getMySubscription().then(value => setSubscriptionCheckout(value.checkout_url)).catch(() => {}); }, [user]);
+  useEffect(() => {
+    if (!user || (user.role === "owner" && user.subscriptionStatus !== "active")) return;
+    Promise.all([listOrders(), listRows("products")]).then(([nextOrders, nextProducts]) => {
+      setOrders(nextOrders);
+      setDashboardProducts(nextProducts as Product[]);
+    }).catch(e => setError(e instanceof Error ? e.message : "Não foi possível carregar o resumo da loja."));
+  }, [user]);
   async function refresh() { try { setRows(await listRows(tab)); } catch (e) { setError(message(e)); } }
   function message(e: unknown) { return e instanceof Error ? e.message : "Ocorreu um erro."; }
   async function login(e: FormEvent) { e.preventDefault(); setBusy(true); setError(""); try { setUser(await signIn(email, password)); } catch (e) { setError(message(e)); } finally { setBusy(false); } }
@@ -78,6 +88,15 @@ function Admin() {
   if (user.role === "owner" && user.subscriptionStatus !== "active") return <main className="admin-page"><section className="admin-login"><span className="admin-eyebrow">FRANGO SHOW · ASSINATURA</span><h1>Ative o acesso à loja</h1><p>O pagamento ainda não foi confirmado pela Kiwify. Assim que a confirmação chegar, o painel será liberado automaticamente.</p>{subscriptionCheckout && <a className="admin-primary" href={subscriptionCheckout}>Continuar pagamento</a>}<a className="admin-logout" href="/planos">Ver planos</a><button className="admin-logout" onClick={()=>{signOut();setUser(null);}}>Sair</button></section></main>;
   const imageField = <label className="admin-image-field">Imagem<input type="file" accept="image/*" onChange={e => image(e.currentTarget.files?.[0])} /><span><ImagePlus size={18}/> Enviar imagem</span>{typeof form["image_url"] === "string" && form["image_url"] && <img src={form["image_url"]} alt="Prévia" />}</label>;
   const componentProducts = rows.filter((row): row is Product => "category" in row && row.category !== "Combos");
+  const eligibleOrders = orders.filter(order => order.status !== "cancelled");
+  const sevenDaysAgo = new Date(); sevenDaysAgo.setHours(0, 0, 0, 0); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+  const recentOrders = eligibleOrders.filter(order => new Date(order.created_at) >= sevenDaysAgo);
+  const salesTotal = recentOrders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+  const activeKitchenOrders = orders.filter(order => order.status === "new" || order.status === "preparing");
+  const lowStockProducts = dashboardProducts.filter(product => product.is_active && product.stock_quantity !== null && product.stock_quantity <= 5);
+  const chartDays = Array.from({ length: 7 }, (_, index) => { const date = new Date(); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() - (6 - index)); const dayOrders = recentOrders.filter(order => { const created = new Date(order.created_at); return created.getFullYear() === date.getFullYear() && created.getMonth() === date.getMonth() && created.getDate() === date.getDate(); }); return { date, count: dayOrders.length, total: dayOrders.reduce((sum, order) => sum + Number(order.total || 0), 0) }; });
+  const chartMax = Math.max(1, ...chartDays.map(day => day.total));
+  const currency = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   function toggleComboComponent(productId: number, enabled: boolean) {
     setComboComponents(current => enabled
       ? [...current, { product_id: productId, quantity: 1 }]
@@ -86,11 +105,57 @@ function Admin() {
   function setComboComponentQuantity(productId: number, quantity: number) {
     setComboComponents(current => current.map(component => component.product_id === productId ? { ...component, quantity } : component));
   }
-  return <main className="admin-page"><div className="admin-wrap">
-    <header className="admin-header"><div><span className="admin-eyebrow">{user.role === "master" ? "ADMIN MASTER" : "PAINEL DA LOJA"}</span><h1>Painel de conteúdo</h1><p>Gerencie o que aparece na loja.</p></div><div className="admin-header-actions">{user.role === "master" && <a className="admin-logout" href="/admin/planos">Planos SaaS</a>}<a className="admin-logout" href="/balcao">Abrir caixa</a><a className="admin-logout" href="/cozinha">Abrir cozinha</a><button className="admin-logout" onClick={() => { signOut(); setUser(null); }}><LogOut size={17}/> Sair</button></div></header>
-    <nav className="admin-tabs">{tabs.map(t => <button key={t.id} className={tab === t.id ? "active" : ""} onClick={() => { setTab(t.id); setEditing(null); setForm(blank(t.id)); setComboComponents([]); }}>{t.label}</button>)}</nav>
-    {error && <div className="admin-error">{error}</div>}{notice && <div className="admin-notice">{notice}</div>}
-    <section className="admin-card" id="admin-form"><div className="admin-card-head"><h2>{editing ? "Editar" : "Adicionar"} {tabs.find(t => t.id === tab)?.label.toLowerCase()}</h2>{editing && <button onClick={fresh}>Cancelar</button>}</div>
+  return <main className="admin-page saas-admin-page">
+    <aside className="saas-sidebar">
+      <a className="saas-brand" href="/" aria-label="Frango Show, abrir loja"><span className="saas-brand-mark"><Utensils size={22}/></span><span><b>FRANGO SHOW</b><small>PAINEL DA LOJA</small></span></a>
+      <div className="saas-nav-group"><span>OPERAÇÃO</span>
+        <button className={section === "dashboard" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => setSection("dashboard")}><LayoutDashboard size={19}/> Visão geral</button>
+        <a className="saas-nav-item" href="/cozinha"><ChefHat size={19}/> Pedidos e cozinha</a>
+        <a className="saas-nav-item" href="/balcao"><Store size={19}/> Venda no balcão</a>
+      </div>
+      <div className="saas-nav-group"><span>GESTÃO</span>
+        <button className={section === "products" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => { setSection("products"); setTab("products"); setEditing(null); setForm(blank("products")); setComboComponents([]); }}><Package size={19}/> Produtos e combos</button>
+        <button className={section === "promotions" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => { setSection("promotions"); setTab("promotions"); setEditing(null); setForm(blank("promotions")); setComboComponents([]); }}><Megaphone size={19}/> Promoções</button>
+        <button className={section === "announcements" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => { setSection("announcements"); setTab("announcements"); setEditing(null); setForm(blank("announcements")); setComboComponents([]); }}><ShoppingBag size={19}/> Avisos da loja</button>
+        <a className="saas-nav-item" href="#sales-chart" onClick={() => setSection("dashboard")}><BarChart3 size={19}/> Relatórios</a>
+      </div>
+      <div className="saas-sidebar-bottom">
+        {user.role === "master" && <a className="saas-nav-item" href="/admin/planos"><CreditCard size={19}/> Planos SaaS</a>}
+        <span className="saas-store-chip"><span/> Loja conectada</span>
+        <small>{user.email || (user.role === "master" ? "Admin master" : "Conta da loja")}</small>
+      </div>
+    </aside>
+    <div className="saas-main">
+      <header className="saas-topbar"><div className="saas-connection"><span/> Sistema operacional</div><div className="saas-topbar-actions">{user.role === "master" && <a href="/admin/planos" className="saas-top-link"><CreditCard size={16}/> Planos</a>}<span className="saas-avatar">{(user.email || "F").charAt(0).toUpperCase()}</span><button className="saas-top-link" onClick={() => { signOut(); setUser(null); }}><LogOut size={16}/> Sair</button></div></header>
+      <div className="saas-content">
+        {error && <div className="admin-error" role="alert">{error}</div>}{notice && <div className="admin-notice" role="status">{notice}</div>}
+        {section === "dashboard" ? <section className="saas-dashboard">
+          <div className="saas-page-heading"><div><span className="admin-eyebrow">{user.role === "master" ? "ADMIN MASTER" : "GESTÃO DA LOJA"}</span><h1>Dashboard <span className="saas-heading-dot">·</span></h1><p>Visão geral · últimos 7 dias</p></div><div className="saas-range-pill"><Clock3 size={16}/> Últimos 7 dias</div></div>
+          <div className="saas-metrics">
+            <article className="saas-metric saas-metric-highlight"><div><span className="saas-metric-icon"><ShoppingBag size={19}/></span><span>Pedidos recebidos</span></div><strong>{recentOrders.length}</strong><small><ArrowRight size={14}/> {orders.filter(order => order.status === "new").length} novos</small></article>
+            <article className="saas-metric"><div><span className="saas-metric-icon blue"><CircleDollarSign size={19}/></span><span>Vendas no período</span></div><strong>{currency(salesTotal)}</strong><small><BarChart3 size={14}/> {recentOrders.length} pedidos não cancelados</small></article>
+            <article className="saas-metric"><div><span className="saas-metric-icon blue"><ChefHat size={19}/></span><span>Em preparo</span></div><strong>{activeKitchenOrders.length}</strong><small><Clock3 size={14}/> Acompanhe pela cozinha</small></article>
+            <article className="saas-metric"><div><span className="saas-metric-icon amber"><AlertTriangle size={19}/></span><span>Estoque baixo</span></div><strong>{lowStockProducts.length}</strong><small><Package size={14}/> Produtos com até 5 unidades</small></article>
+          </div>
+          <div className="saas-dashboard-grid">
+            <section className="saas-panel saas-chart-panel" id="sales-chart"><div className="saas-panel-heading"><div><h2>Vendas</h2><p>Valor dos pedidos por dia</p></div><span className="saas-chart-legend"><i/> Total vendido</span></div>
+              <div className="saas-chart">{chartDays.map(day => <div className="saas-chart-column" key={day.date.toISOString()}><div className="saas-chart-track"><span style={{height: `${day.total ? Math.max(8, day.total / chartMax * 100) : 3}%`}} title={currency(day.total)} /></div><small>{new Intl.DateTimeFormat("pt-BR", { weekday: "short" }).format(day.date).replace(".", "")}</small></div>)}</div>
+              {!recentOrders.length && <p className="saas-chart-empty">Os pedidos registrados nos últimos 7 dias aparecerão aqui.</p>}
+            </section>
+            <section className="saas-panel saas-priority-panel"><div className="saas-panel-heading"><div><h2><AlertTriangle size={19}/> Precisa de atenção</h2><p>O que merece prioridade agora</p></div></div>
+              <div className="saas-priority-stats"><div><Clock3 size={15}/><span>EM ABERTO</span><b>{activeKitchenOrders.length}</b></div><div><Package size={15}/><span>ESTOQUE BAIXO</span><b>{lowStockProducts.length}</b></div></div>
+              {activeKitchenOrders.slice(0, 3).map(order => <div className="saas-priority-order" key={order.id}><span className="saas-priority-dot"/><b>Pedido #{order.id}</b><small>{order.customer_name} · {order.status === "new" ? "Novo" : "Em preparo"}</small></div>)}
+              {!activeKitchenOrders.length && !lowStockProducts.length && <p className="saas-all-clear">Tudo em dia por aqui.</p>}
+              <div className="saas-panel-actions"><a href="/cozinha">Abrir cozinha <ArrowRight size={15}/></a>{lowStockProducts.length > 0 && <button onClick={() => { setSection("products"); setTab("products"); }}>Revisar estoque <ArrowRight size={15}/></button>}</div>
+            </section>
+          </div>
+          <section className="saas-panel saas-recent-panel"><div className="saas-panel-heading"><div><h2>Pedidos recentes</h2><p>Últimos pedidos recebidos pela loja</p></div><a href="/cozinha">Ver todos <ArrowRight size={15}/></a></div>
+            {orders.slice(0, 5).length ? orders.slice(0, 5).map(order => <article className="saas-order-row" key={order.id}><span className={`saas-order-status status-${order.status}`}/><b>#{order.id}</b><span>{order.customer_name}</span><small>{new Date(order.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</small><strong>{currency(Number(order.total || 0))}</strong></article>) : <p className="saas-chart-empty">Os pedidos da loja aparecerão nesta lista.</p>}
+          </section>
+        </section> : <>
+          <header className="saas-page-heading saas-management-heading"><div><span className="admin-eyebrow">{user.role === "master" ? "ADMIN MASTER" : "GESTÃO DA LOJA"}</span><h1>{tabs.find(t => t.id === tab)?.label}</h1><p>Gerencie os dados que aparecem na loja.</p></div><button className="saas-primary-action" onClick={fresh}><Plus size={17}/> Novo item</button></header>
+          <nav className="admin-tabs">{tabs.map(t => <button key={t.id} className={tab === t.id ? "active" : ""} onClick={() => { setSection(t.id); setTab(t.id); setEditing(null); setForm(blank(t.id)); setComboComponents([]); }}>{t.label}</button>)}</nav>
+          <section className="admin-card" id="admin-form"><div className="admin-card-head"><h2>{editing ? "Editar" : "Adicionar"} {tabs.find(t => t.id === tab)?.label.toLowerCase()}</h2>{editing && <button onClick={fresh}>Cancelar</button>}</div>
       <form className="admin-form" onSubmit={submit}>
         {tab === "products" && <><div className="admin-two"><label>Nome<input value={String(form["name"] || "")} onChange={e => setForm(f => ({...f,name:e.target.value}))} required /></label><label>Categoria<select value={String(form["category"])} onChange={e => setForm(f => ({...f,category:e.target.value}))}>{["Aves","Bovinos","Suínos","Acompanhamentos","Sobremesas","Bebidas","Combos"].map(x=><option key={x}>{x}</option>)}</select></label></div>{String(form["category"]) === "Combos" && <section className="combo-components-editor"><div><b>Composição do combo</b><small>Marque os itens incluídos e informe a quantidade consumida por unidade do combo.</small></div>{componentProducts.length ? componentProducts.map(product => {
           const selected = comboComponents.find(component => component.product_id === product.id);
@@ -102,5 +167,8 @@ function Admin() {
       </form>
     </section>
     <section className="admin-list"><div className="admin-card-head"><h2>Itens cadastrados ({rows.length})</h2><button className="admin-add" onClick={fresh}><Plus size={17}/> Novo</button></div>{rows.length ? rows.map(row => <article className="admin-row" key={row.id}>{("image_url" in row && row.image_url) && <img src={row.image_url} alt="" />}<div><b>{"name" in row ? row.name : row.title}</b><small>{"category" in row ? row.category + " · " + new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(row.price) : "description" in row ? row.description : row.body}</small><small>{row.is_active ? "Ativo" : "Oculto"}{"category" in row && <> · {row.category === "Combos" ? "Estoque pelos componentes" : row.stock_quantity === null ? "Estoque sem controle" : "Estoque: " + row.stock_quantity}</>}</small></div><button aria-label="Editar" onClick={()=>void edit(row)}><Pencil size={17}/></button><button aria-label="Excluir" onClick={()=>remove(row.id)}><Trash2 size={17}/></button></article>) : <p className="admin-empty">Nenhum item cadastrado ainda.</p>}</section>
-  </div></main>;
+        </>}
+      </div>
+    </div>
+  </main>;
 }
