@@ -42,7 +42,7 @@ const PlanosRoute = PlanosRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminPlanosRoute = AdminPlanosRouteImport.update({
-  id: '/admin/planos',
+  id: '/admin_/planos',
   path: '/admin/planos',
   getParentRoute: () => rootRouteImport,
 } as any)
@@ -70,7 +70,7 @@ export interface FileRoutesById {
   '/balcao': typeof BalcaoRoute
   '/cozinha': typeof CozinhaRoute
   '/planos': typeof PlanosRoute
-  '/admin/planos': typeof AdminPlanosRoute
+  '/admin_/planos': typeof AdminPlanosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -85,7 +85,7 @@ export interface FileRouteTypes {
     | '/balcao'
     | '/cozinha'
     | '/planos'
-    | '/admin/planos'
+    | '/admin_/planos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -134,8 +134,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlanosRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/planos': {
-      id: '/admin/planos'
+    '/admin_/planos': {
+      id: '/admin_/planos'
       path: '/admin/planos'
       fullPath: '/admin/planos'
       preLoaderRoute: typeof AdminPlanosRouteImport
