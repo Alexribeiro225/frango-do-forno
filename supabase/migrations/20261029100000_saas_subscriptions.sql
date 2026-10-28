@@ -182,7 +182,7 @@ returns text language plpgsql security definer set search_path=public,auth,pg_te
 declare
   v_email text := lower(trim(coalesce(p_event #>> '{Customer,email}',p_event #>> '{customer,email}',p_event->>'email','')));
   v_event_type text := lower(coalesce(p_event->>'webhook_event_type',p_event->>'event_type',''));
-  v_event_id text := coalesce(p_event->>'order_id',p_event->>'order_ref',p_event->>'id');
+  v_event_id text := coalesce(p_event->>'order_id',p_event->>'order_ref',p_event->>'id',concat_ws(':',coalesce(p_event->>'subscription_id',p_event #>> '{Subscription,id}'),coalesce(p_event->>'webhook_event_type',p_event->>'event_type'),coalesce(p_event->>'updated_at',p_event->>'created_at',p_event->>'timestamp')));
   v_subscription_id text := coalesce(p_event #>> '{Subscription,id}',p_event->>'subscription_id');
   v_product_id text := coalesce(p_event #>> '{Product,product_id}',p_event #>> '{product,id}',p_event->>'product_id');
   v_user_id uuid;
