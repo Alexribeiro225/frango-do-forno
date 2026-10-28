@@ -16,6 +16,7 @@ create table public.orders (
 alter table public.orders enable row level security;
 create policy "Kitchen admin reads orders" on public.orders for select to authenticated using (auth.jwt() ->> 'email' = 'conectstore.app@gmail.com');
 create policy "Kitchen admin updates orders" on public.orders for update to authenticated using (auth.jwt() ->> 'email' = 'conectstore.app@gmail.com') with check (auth.jwt() ->> 'email' = 'conectstore.app@gmail.com');
+revoke all on table public.orders from public, anon, authenticated;
 grant select on public.orders to authenticated;
 grant update (status) on public.orders to authenticated;
 
