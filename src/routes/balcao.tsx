@@ -34,7 +34,7 @@ function Counter() {
 
   function change(product: Product, amount: number) {
     setCart(current => {
-      const quantity = Math.max(0, Math.min(product.stock_quantity ?? 99, (current[product.id] || 0) + amount));
+      const quantity = Math.max(0, Math.min(99, product.stock_quantity ?? 99, (current[product.id] || 0) + amount));
       const next = { ...current, [product.id]: quantity };
       if (!quantity) delete next[product.id];
       return next;
