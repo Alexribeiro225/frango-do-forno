@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { AlertTriangle, ArrowRight, BarChart3, ChefHat, CircleDollarSign, Clock3, CreditCard, ImagePlus, LayoutDashboard, LogOut, Megaphone, Package, Pencil, Plus, ShoppingBag, Store, Trash2, Utensils } from "lucide-react";
+import { AlertTriangle, ArrowRight, BarChart3, ChefHat, CircleDollarSign, Clock3, CreditCard, ImagePlus, LayoutDashboard, LogOut, Megaphone, Package, Pencil, Plus, ShoppingBag, Store, Trash2 } from "lucide-react";
 import { configured, currentUser, deleteRow, getMySubscription, listComboComponents, listOrders, listRows, saveComboComponents, saveRow, signIn, signOut, uploadImage } from "@/lib/cms";
 import type { Announcement, KitchenOrder, Product, Promo } from "@/lib/cms";
 
