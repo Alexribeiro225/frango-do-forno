@@ -18,7 +18,6 @@ create policy "Kitchen admin reads orders" on public.orders for select to authen
 create policy "Kitchen admin updates orders" on public.orders for update to authenticated using (auth.jwt() ->> 'email' = 'conectstore.app@gmail.com') with check (auth.jwt() ->> 'email' = 'conectstore.app@gmail.com');
 grant select on public.orders to authenticated;
 grant update (status) on public.orders to authenticated;
-grant usage, select on sequence public.orders_id_seq to authenticated;
 
 create or replace function public.create_order(
   p_customer_name text,
