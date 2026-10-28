@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { LogOut, Minus, Plus, Printer, Search, ShoppingCart, Trash2 } from "lucide-react";
-import { configured, createCounterSale, currentUser, listRows, signIn, signOut, type Product } from "@/lib/cms";
+import { configured, createCounterSale, currentUser, loadPublicContent, signIn, signOut, type Product } from "@/lib/cms";
 
 export const Route = createFileRoute("/balcao")({ component: Counter });
 const money = (value: number) => Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -23,8 +23,9 @@ function Counter() {
 
   useEffect(() => { currentUser().then(setUser).finally(() => setChecked(true)); }, []);
   const loadProducts = useCallback(async () => {
-    const rows = await listRows("products") as Product[];
-    setProducts(rows.filter(product => product.is_active));
+    const content = await loadPublicContent();
+    if (!content) throw new Error("Não foi possível carregar o cardápio.");
+    setProducts(content.products as Product[]);
   }, []);
   useEffect(() => { if (user) void loadProducts().catch(e => setError(e instanceof Error ? e.message : "Não foi possível carregar os produtos.")); }, [user, loadProducts]);
 
