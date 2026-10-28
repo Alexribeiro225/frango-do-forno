@@ -539,3 +539,5 @@
 
 .kitchen-auto-print { display:inline-flex; align-items:center; gap:7px; border:1px solid #d7e9dc; border-radius:10px; padding:8px 11px; background:#edf8ef; color:#176b34; font-size:13px; font-weight:750; cursor:pointer; }.kitchen-auto-print input { width:16px; height:16px; accent-color:#1d9a4a; }
 @media(max-width:700px) { .kitchen-auto-print { order:3; } }
+
+.admin-stock-help { display:block; margin-top:-10px; margin-bottom:14px; color:#756d66; font-size:13px; }.product-out-of-stock { border-radius:999px; padding:10px 14px; background:#f1ece8; color:#716962; font-size:12px; font-weight:800; text-transform:uppercase; }.product-action button:disabled,.favorite-card button:disabled,.cart-line .quantity-control button:disabled { opacity:.45; cursor:not-allowed; transform:none; box-shadow:none; }.quantity-control button:disabled { opacity:.4; cursor:not-allowed; }
