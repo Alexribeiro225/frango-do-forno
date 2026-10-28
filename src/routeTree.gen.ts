@@ -57,7 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
+  '/admin': typeof AdminRoute
   '/balcao': typeof BalcaoRoute
   '/cozinha': typeof CozinhaRoute
   '/planos': typeof PlanosRoute
@@ -66,7 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
+  '/admin': typeof AdminRoute
   '/balcao': typeof BalcaoRoute
   '/cozinha': typeof CozinhaRoute
   '/planos': typeof PlanosRoute
@@ -90,7 +90,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRouteWithChildren
+  AdminRoute: typeof AdminRoute
   BalcaoRoute: typeof BalcaoRoute
   CozinhaRoute: typeof CozinhaRoute
   PlanosRoute: typeof PlanosRoute
