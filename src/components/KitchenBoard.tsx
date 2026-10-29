@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChefHat, Clock3, Printer, RefreshCw } from "lucide-react";
+import { PeriodPicker } from "@/components/PeriodPicker";
+import { defaultPeriod, periodRange, type PeriodPreset } from "@/lib/period";
 import { listOrders, updateOrderStatus, type KitchenOrder } from "@/lib/cms";
 
 const money = (value: number) => Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -11,6 +13,8 @@ const nextStatus: Partial<Record<KitchenOrder["status"], KitchenOrder["status"]>
   new: "preparing", preparing: "ready", ready: "completed",
 };
 
+const kitchenPresets: PeriodPreset[] = ["today", "date", "7", "30", "month", "custom"];
+
 export function KitchenBoard() {
   const [orders, setOrders] = useState<KitchenOrder[]>([]);
   const [error, setError] = useState("");
@@ -18,6 +22,10 @@ export function KitchenBoard() {
   const [autoPrint, setAutoPrint] = useState(true);
   const [printQueue, setPrintQueue] = useState<number[]>([]);
   const [printPulse, setPrintPulse] = useState(0);
+  const [period, setPeriod] = useState(() => defaultPeriod("today"));
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | KitchenOrder["status"]>("all");
+  const periodRef = useRef(period);
+  periodRef.current = period;
   const knownOrderIds = useRef<Set<number> | null>(null);
   const autoPrintRef = useRef(true);
   const printingRef = useRef(false);
@@ -30,7 +38,7 @@ export function KitchenBoard() {
 
   const refresh = useCallback(async () => {
     try {
-      const latest = await listOrders();
+      const latest = await listOrders(periodRange(periodRef.current));
       const known = knownOrderIds.current;
       const storedLastSeen = localStorage.getItem("frango-kitchen-last-seen-order-id");
       const maxId = latest.reduce((max, order) => Math.max(max, order.id), Number(storedLastSeen || 0));
@@ -39,7 +47,7 @@ export function KitchenBoard() {
         knownOrderIds.current = new Set(latest.map(order => order.id));
         if (autoPrintRef.current && firstSeen.length) setPrintQueue(queue => [...queue, ...firstSeen.sort((a, b) => a - b)]);
       } else {
-        const incoming = latest.filter(order => !known.has(order.id)).map(order => order.id);
+        const incoming = latest.filter(order => !known.has(order.id) && order.id > Number(storedLastSeen || 0)).map(order => order.id);
         latest.forEach(order => known.add(order.id));
         if (autoPrintRef.current && incoming.length) setPrintQueue(queue => [...queue, ...incoming.reverse()]);
       }
@@ -53,6 +61,8 @@ export function KitchenBoard() {
     const timer = window.setInterval(() => void refresh(), 10000);
     return () => window.clearInterval(timer);
   }, [refresh]);
+
+  useEffect(() => { void refresh(); }, [period, refresh]);
 
   async function changeStatus(order: KitchenOrder, status: KitchenOrder["status"]) {
     try { await updateOrderStatus(order.id, status); await refresh(); }
@@ -92,16 +102,22 @@ export function KitchenBoard() {
     return () => window.clearTimeout(timer);
   }, [autoPrint, printQueue, printPulse, printOrder]);
 
+  const visibleOrders = orders.filter(order => statusFilter === "all" ? true : statusFilter === "active" ? order.status === "new" || order.status === "preparing" : order.status === statusFilter);
+
   return <>
     <div className="kitchen-board-toolbar">
+      <PeriodPicker value={period} onChange={setPeriod} presets={kitchenPresets} />
+      <select className="kitchen-status-filter" aria-label="Filtrar por status" value={statusFilter} onChange={e => setStatusFilter(e.currentTarget.value as typeof statusFilter)}>
+        <option value="all">Todos os status</option><option value="active">Pendentes (novos + em preparo)</option><option value="new">Novos</option><option value="preparing">Em preparo</option><option value="ready">Prontos</option><option value="completed">Concluídos</option><option value="cancelled">Cancelados</option>
+      </select>
       <span className="kitchen-refresh-label">{updatedAt ? "Atualizado às " + updatedAt : "Carregando…"}</span>
       <label className="kitchen-auto-print"><input type="checkbox" checked={autoPrint} onChange={event => { const enabled = event.currentTarget.checked; autoPrintRef.current = enabled; setAutoPrint(enabled); localStorage.setItem("frango-kitchen-auto-print", String(enabled)); if (!enabled) setPrintQueue([]); }} /><Printer size={16} /> Impressão automática</label>
       <button className="kitchen-refresh-btn" onClick={() => void refresh()} aria-label="Atualizar pedidos"><RefreshCw size={17} /> Atualizar</button>
     </div>
     {error && <p className="kitchen-error kitchen-alert" role="alert">{error}</p>}
     <section className="kitchen-orders" aria-label="Lista de pedidos">
-      {orders.length === 0 ? <div className="kitchen-empty"><ChefHat size={36} /><b>Nenhum pedido recebido</b><span>Quando um cliente finalizar a compra, o pedido aparecerá aqui.</span></div> :
-      orders.map(order => <article className="kitchen-order" id={"order-" + order.id} key={order.id}>
+      {visibleOrders.length === 0 ? <div className="kitchen-empty"><ChefHat size={36} /><b>Nenhum pedido encontrado</b><span>Não há pedidos para o período e status escolhidos.</span></div> :
+      visibleOrders.map(order => <article className="kitchen-order" id={"order-" + order.id} key={order.id}>
         <div className="kitchen-order-top"><div><span className="kitchen-order-number">Pedido #{order.id}</span><span className={"kitchen-status status-" + order.status}>{statusLabel[order.status]}</span></div><time><Clock3 size={15} />{time(order.created_at)}</time></div>
         <div className="kitchen-order-customer"><b>{order.customer_name}</b>{order.customer_phone && <a href={"tel:" + order.customer_phone}>{order.customer_phone}</a>}<span>{order.fulfillment === "delivery" ? "🛵 Delivery" : order.fulfillment === "counter" ? "🏪 Balcão" : "🏠 Retirada"} · {order.payment_method}</span></div>
         {order.fulfillment === "delivery" && <div className="kitchen-address"><b>Endereço</b><span>{[order.address["street"], order.address["number"] && "nº " + order.address["number"], order.address["neighborhood"], order.address["cep"]].filter(Boolean).join(", ")}</span>{order.address["complement"] && <span>Complemento: {order.address["complement"]}</span>}{order.address["reference"] && <span>Referência: {order.address["reference"]}</span>}</div>}
