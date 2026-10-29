@@ -1,3 +1,5 @@
+import { withComboAvailability } from "@/lib/inventory";
+
 export type Product = { id: number; category: string; name: string; price: number; description: string; image_url: string; is_popular: boolean; is_active: boolean; stock_quantity: number | null };
 export type ComboComponent = { combo_product_id: number; component_product_id: number; quantity_per_combo: number };
 export type Promo = { id: number; title: string; description: string; image_url: string | null; starts_at: string | null; ends_at: string | null; is_active: boolean };
@@ -123,23 +125,18 @@ export async function loadPublicContent() {
     ]);
     const productRows = products as Product[];
     const componentRows = components as ComboComponent[];
-    const productById = new Map<number, Product>(productRows.map(product => [product.id, product] as const));
-    const productsWithAvailability = productRows.map(product => {
-      if (product.category !== "Combos") return product;
-      const recipe = componentRows.filter(component => component.combo_product_id === product.id);
-      if (!recipe.length) return { ...product, stock_quantity: 0 };
-      const capacities = recipe.map(component => {
-        const ingredient = productById.get(component.component_product_id);
-        if (!ingredient) return 0;
-        return ingredient.stock_quantity === null ? Number.POSITIVE_INFINITY : Math.floor(ingredient.stock_quantity / component.quantity_per_combo);
-      });
-      const available = Math.min(...capacities);
-      return { ...product, stock_quantity: Number.isFinite(available) ? available : null };
-    });
+    const productsWithAvailability = withComboAvailability(productRows, componentRows);
     return { products: productsWithAvailability, promos: promos as Promo[], announcements: announcements as Announcement[] };
   } catch { return null; }
 }
-export async function listRows(table: "products" | "promotions" | "announcements") { return rest(table, "?select=*&order=created_at.desc"); }
+export async function listRows(table: "products" | "promotions" | "announcements") {
+  if (table !== "products") return rest(table, "?select=*&order=created_at.desc");
+  const [products, components] = await Promise.all([
+    rest(table, "?select=*&order=created_at.desc") as Promise<Product[]>,
+    rest("combo_components", "?select=combo_product_id,component_product_id,quantity_per_combo") as Promise<ComboComponent[]>,
+  ]);
+  return withComboAvailability(products, components);
+}
 export async function listActivePlans() {
   return authFetch("/rest/v1/saas_plans?select=id,name,description,price,billing_interval,checkout_url,kiwify_product_id,features,is_active,sort_order&is_active=eq.true&order=sort_order.asc") as Promise<SaaSPlan[]>;
 }

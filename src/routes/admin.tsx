@@ -9,7 +9,17 @@ import { PeriodPicker } from "@/components/PeriodPicker";
 import { defaultPeriod, periodLabel, periodRange } from "@/lib/period";
 import type { Announcement, KitchenOrder, Product, Promo } from "@/lib/cms";
 
-export const Route = createFileRoute("/admin")({ component: Admin });
+export const Route = createFileRoute("/admin")({
+  head: () => ({ meta: [
+    { title: "Painel de gestão | Frango Show Rotisserie" },
+    { name: "description", content: "Gestão de pedidos, produtos e estoque da Frango Show Rotisserie." },
+    { property: "og:title", content: "Painel de gestão | Frango Show Rotisserie" },
+    { property: "og:description", content: "Gestão de pedidos, produtos e estoque da Frango Show Rotisserie." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
+  component: Admin,
+});
 type Tab = "products" | "promotions" | "announcements";
 const tabs: { id: Tab; label: string }[] = [{ id: "products", label: "Produtos" }, { id: "promotions", label: "Promoções" }, { id: "announcements", label: "Avisos" }];
 const blank = (tab: Tab) => tab === "products"
@@ -54,7 +64,11 @@ function Admin() {
     const timer = window.setInterval(load, 10_000);
     return () => { cancelled = true; window.clearInterval(timer); };
   }, [user, period]);
-  async function refresh() { try { setRows(await listRows(tab)); } catch (e) { setError(message(e)); } }
+  async function refresh() { try {
+    const nextRows = await listRows(tab);
+    setRows(nextRows);
+    if (tab === "products") setDashboardProducts(nextRows as Product[]);
+  } catch (e) { setError(message(e)); } }
   function message(e: unknown) { return e instanceof Error ? e.message : "Ocorreu um erro."; }
   async function login(e: FormEvent) { e.preventDefault(); setBusy(true); setError(""); setNotice(""); try { if (!(await isEmailRegistered(email))) { setMode("signup"); setPassword(""); return; } setUser(await signIn(email, password)); } catch (e) { setError(message(e)); } finally { setBusy(false); } }
   async function register(e: FormEvent) {

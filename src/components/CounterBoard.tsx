@@ -20,7 +20,12 @@ export function CounterBoard() {
     if (!content) throw new Error("Não foi possível carregar o cardápio.");
     setProducts(content.products as Product[]);
   }, []);
-  useEffect(() => { void loadProducts().catch(e => setError(e instanceof Error ? e.message : "Não foi possível carregar os produtos.")); }, [loadProducts]);
+  useEffect(() => {
+    const refresh = () => void loadProducts().catch(e => setError(e instanceof Error ? e.message : "Não foi possível carregar os produtos."));
+    refresh();
+    const timer = window.setInterval(refresh, 10_000);
+    return () => window.clearInterval(timer);
+  }, [loadProducts]);
 
   const visibleProducts = useMemo(() => products.filter(product => product.name.toLocaleLowerCase("pt-BR").includes(search.toLocaleLowerCase("pt-BR"))), [products, search]);
   const selected = products.filter(product => (cart[product.id] || 0) > 0);
