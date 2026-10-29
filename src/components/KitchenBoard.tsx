@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChefHat, Clock3, Printer, RefreshCw } from "lucide-react";
 import { listOrders, updateOrderStatus, type KitchenOrder } from "@/lib/cms";
+import { DatePeriodFilter, createDatePeriod, type DatePeriod } from "@/components/DatePeriodFilter";
 
 const money = (value: number) => Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const time = (value: string) => new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
@@ -13,6 +14,7 @@ const nextStatus: Partial<Record<KitchenOrder["status"], KitchenOrder["status"]>
 
 export function KitchenBoard() {
   const [orders, setOrders] = useState<KitchenOrder[]>([]);
+  const [datePeriod, setDatePeriod] = useState<DatePeriod>(() => createDatePeriod("today"));
   const [error, setError] = useState("");
   const [updatedAt, setUpdatedAt] = useState("");
   const [autoPrint, setAutoPrint] = useState(true);
@@ -30,23 +32,23 @@ export function KitchenBoard() {
 
   const refresh = useCallback(async () => {
     try {
-      const latest = await listOrders();
+      const latest = await listOrders(datePeriod.startAt, datePeriod.endExclusive);
       const known = knownOrderIds.current;
       const storedLastSeen = localStorage.getItem("frango-kitchen-last-seen-order-id");
       const maxId = latest.reduce((max, order) => Math.max(max, order.id), Number(storedLastSeen || 0));
       if (known === null) {
         const firstSeen = storedLastSeen === null ? [] : latest.filter(order => order.id > Number(storedLastSeen)).map(order => order.id);
         knownOrderIds.current = new Set(latest.map(order => order.id));
-        if (autoPrintRef.current && firstSeen.length) setPrintQueue(queue => [...queue, ...firstSeen.sort((a, b) => a - b)]);
+        if (autoPrintRef.current && datePeriod.preset === "today" && firstSeen.length) setPrintQueue(queue => [...queue, ...firstSeen.sort((a, b) => a - b)]);
       } else {
         const incoming = latest.filter(order => !known.has(order.id)).map(order => order.id);
         latest.forEach(order => known.add(order.id));
-        if (autoPrintRef.current && incoming.length) setPrintQueue(queue => [...queue, ...incoming.reverse()]);
+        if (autoPrintRef.current && datePeriod.preset === "today" && incoming.length) setPrintQueue(queue => [...queue, ...incoming.reverse()]);
       }
       if (maxId > 0) localStorage.setItem("frango-kitchen-last-seen-order-id", String(maxId));
       setOrders(latest); setUpdatedAt(new Date().toLocaleTimeString("pt-BR")); setError("");
     } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível carregar os pedidos."); }
-  }, []);
+  }, [datePeriod.startAt, datePeriod.endExclusive, datePeriod.preset]);
 
   useEffect(() => {
     void refresh();
@@ -95,12 +97,13 @@ export function KitchenBoard() {
   return <>
     <div className="kitchen-board-toolbar">
       <span className="kitchen-refresh-label">{updatedAt ? "Atualizado às " + updatedAt : "Carregando…"}</span>
+      <DatePeriodFilter value={datePeriod} onChange={setDatePeriod} />
       <label className="kitchen-auto-print"><input type="checkbox" checked={autoPrint} onChange={event => { const enabled = event.currentTarget.checked; autoPrintRef.current = enabled; setAutoPrint(enabled); localStorage.setItem("frango-kitchen-auto-print", String(enabled)); if (!enabled) setPrintQueue([]); }} /><Printer size={16} /> Impressão automática</label>
       <button className="kitchen-refresh-btn" onClick={() => void refresh()} aria-label="Atualizar pedidos"><RefreshCw size={17} /> Atualizar</button>
     </div>
     {error && <p className="kitchen-error kitchen-alert" role="alert">{error}</p>}
     <section className="kitchen-orders" aria-label="Lista de pedidos">
-      {orders.length === 0 ? <div className="kitchen-empty"><ChefHat size={36} /><b>Nenhum pedido recebido</b><span>Quando um cliente finalizar a compra, o pedido aparecerá aqui.</span></div> :
+      {orders.length === 0 ? <div className="kitchen-empty"><ChefHat size={36} /><b>Nenhum pedido neste período</b><span>Altere a data ou o período para consultar outros pedidos.</span></div> :
       orders.map(order => <article className="kitchen-order" id={"order-" + order.id} key={order.id}>
         <div className="kitchen-order-top"><div><span className="kitchen-order-number">Pedido #{order.id}</span><span className={"kitchen-status status-" + order.status}>{statusLabel[order.status]}</span></div><time><Clock3 size={15} />{time(order.created_at)}</time></div>
         <div className="kitchen-order-customer"><b>{order.customer_name}</b>{order.customer_phone && <a href={"tel:" + order.customer_phone}>{order.customer_phone}</a>}<span>{order.fulfillment === "delivery" ? "🛵 Delivery" : order.fulfillment === "counter" ? "🏪 Balcão" : "🏠 Retirada"} · {order.payment_method}</span></div>
