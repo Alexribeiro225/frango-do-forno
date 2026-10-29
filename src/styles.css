@@ -630,3 +630,10 @@
 .product-card.sold-out .product-photo .popular-badge { display:none; }
 .sold-out-strip { position:absolute; top:50%; left:50%; z-index:2; transform:translate(-50%,-50%) rotate(-13deg); display:inline-block; min-width:78%; padding:11px 18px; border-radius:6px; background:var(--primary); color:var(--primary-foreground); font-family:"Bebas Neue",sans-serif; font-size:clamp(20px,3.4vw,30px); letter-spacing:.18em; text-align:center; text-transform:uppercase; box-shadow:0 8px 22px oklch(0.3 0.05 40 / 28%); }
 
+
+/* Lista de produtos com estoque baixo no painel "Precisa de atenção" */
+.saas-low-stock-list { margin-top: 12px; display: grid; gap: 8px; }
+.saas-low-stock-title { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted-foreground, oklch(0.45 0.02 60)); }
+.saas-low-stock-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; border-radius: 10px; background: oklch(0.97 0.02 80); border: 1px solid oklch(0.9 0.03 70); }
+.saas-low-stock-item b { font-size: 13px; }
+.saas-low-stock-item small { font-size: 12px; font-weight: 700; color: oklch(0.58 0.21 28); white-space: nowrap; }
