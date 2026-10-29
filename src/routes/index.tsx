@@ -92,7 +92,19 @@ function Index() {
   const [catalog, setCatalog] = useState<Item[]>(items);
   const [cmsPromos, setCmsPromos] = useState<Array<{id:number;title:string;description:string;image_url:string|null}>>([]);
   const [cmsAnnouncements, setCmsAnnouncements] = useState<Array<{id:number;title:string;body:string;image_url:string|null}>>([]);
-  useEffect(() => { loadPublicContent().then(content => { if (!content) return; if (content.products.length) setCatalog(content.products.map((p: CmsProduct) => ({id:p.id,cat:p.category,name:p.name,price:Number(p.price),desc:p.description,img:p.image_url,popular:p.is_popular,stock_quantity:p.stock_quantity}))); setCmsPromos(content.promos); setCmsAnnouncements(content.announcements); }); }, []);
+  useEffect(() => {
+    let cancelled = false;
+    const refresh = async () => {
+      const content = await loadPublicContent();
+      if (cancelled || !content) return;
+      setCatalog(content.products.map((p: CmsProduct) => ({id:p.id,cat:p.category,name:p.name,price:Number(p.price),desc:p.description,img:p.image_url,popular:p.is_popular,stock_quantity:p.stock_quantity})));
+      setCmsPromos(content.promos);
+      setCmsAnnouncements(content.announcements);
+    };
+    void refresh();
+    const timer = window.setInterval(refresh, 10_000);
+    return () => { cancelled = true; window.clearInterval(timer); };
+  }, []);
   const combos = catalog.filter(item => item.cat === "Combos");
   const favoriteOrder = [1, 3, 5, 2];
   const favorites = favoriteOrder.map(id => catalog.find(item => item.id === id)).filter((item): item is Item => item !== undefined);
