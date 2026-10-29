@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Minus, Plus, Printer, Search, ShoppingCart, Trash2 } from "lucide-react";
-import { createCounterSale, loadPublicContent, type Product } from "@/lib/cms";
+import { createCounterSale, listRows, type Product } from "@/lib/cms";
 
 const money = (value: number) => Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -16,9 +16,8 @@ export function CounterBoard() {
   const [receipt, setReceipt] = useState<SaleReceipt | null>(null);
 
   const loadProducts = useCallback(async () => {
-    const content = await loadPublicContent();
-    if (!content) throw new Error("Não foi possível carregar o cardápio.");
-    setProducts(content.products as Product[]);
+    const rows = await listRows("products") as Product[];
+    setProducts(rows.filter(product => product.is_active));
   }, []);
   useEffect(() => {
     const refresh = () => void loadProducts().catch(e => setError(e instanceof Error ? e.message : "Não foi possível carregar os produtos."));

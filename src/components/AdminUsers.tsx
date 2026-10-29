@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
-import { KeyRound, Lock, LogIn, RefreshCw, Unlock, CalendarClock } from "lucide-react";
+import { KeyRound, Lock, LogIn, RefreshCw, Unlock, CalendarClock, Trash2 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { accessToken, enterAsUser, listManagedUsers, trialDaysLeft, updateManagedUser, type ManagedUser } from "@/lib/cms";
-import { adminImpersonate, adminSetPassword } from "@/lib/users.functions";
+import { adminDeleteUser, adminImpersonate, adminSetPassword } from "@/lib/users.functions";
 
 const statusLabel: Record<string, string> = { trial: "Teste grátis", active: "Assinante", pending: "Pendente", past_due: "Pagamento atrasado", canceled: "Cancelado", refunded: "Reembolsado", chargeback: "Contestado" };
 
@@ -10,6 +13,16 @@ export function AdminUsers() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<ManagedUser | null>(null);
+  const deleteUser = useServerFn(adminDeleteUser);
+  async function confirmDelete() {
+    if (!deleting) return;
+    const target = deleting;
+    await run(target.user_id, async () => {
+      await deleteUser({ data: { userId: target.user_id } });
+      setDeleting(null);
+    }, "Usuário excluído. O acesso foi removido.");
+  }
   const msg = (e: unknown) => (e instanceof Error ? e.message : "Ocorreu um erro.");
   async function load() { try { setUsers(await listManagedUsers()); } catch (e) { setError(msg(e)); } }
   useEffect(() => { load(); }, []);
@@ -55,8 +68,17 @@ export function AdminUsers() {
           <button disabled={busy === u.user_id} onClick={() => changePassword(u)}><KeyRound size={15}/> Senha</button>
           <button disabled={busy === u.user_id} onClick={() => enter(u)}><LogIn size={15}/> Entrar</button>
           <button disabled={busy === u.user_id} className={u.is_blocked ? "" : "danger"} onClick={() => toggleBlock(u)}>{u.is_blocked ? <><Unlock size={15}/> Desbloquear</> : <><Lock size={15}/> Bloquear</>}</button>
+          <Button variant="destructive" size="sm" disabled={busy !== null} onClick={() => { setError(""); setDeleting(u); }}><Trash2 size={15}/> Excluir usuário</Button>
         </div>
       </article>) : <p className="saas-chart-empty">Nenhum usuário cadastrado ainda.</p>}
     </section>
+    <AlertDialog open={deleting !== null} onOpenChange={open => { if (!open && !busy) setDeleting(null); }}>
+      <AlertDialogContent className="max-w-lg w-[calc(100%-2rem)]">
+        <AlertDialogTitle>Excluir usuário?</AlertDialogTitle>
+        <AlertDialogDescription>Excluir a conta {deleting?.customer_email} e remover seu acesso permanentemente? Esta ação não pode ser desfeita. Os registros da loja serão preservados.</AlertDialogDescription>
+        {error && <p className="text-destructive" role="alert">{error}</p>}
+        <AlertDialogFooter><AlertDialogCancel disabled={busy !== null}>Cancelar</AlertDialogCancel><Button variant="destructive" disabled={busy !== null} onClick={() => void confirmDelete()}><Trash2/>{busy ? "Excluindo…" : "Excluir permanentemente"}</Button></AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </section>;
 }

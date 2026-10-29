@@ -1,6 +1,16 @@
 import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
+import { accessToken } from "./lib/cms";
+
+// The dashboard owns a custom session, rather than the generated client's session.
+const attachDashboardAuth = createMiddleware({ type: "function" }).client(async ({ next }) => {
+  try {
+    return await next({ headers: { Authorization: `Bearer ${await accessToken()}` } });
+  } catch (error) {
+    throw error;
+  }
+});
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -26,4 +36,5 @@ const csrfMiddleware = createCsrfMiddleware({
 
 export const startInstance = createStart(() => ({
   requestMiddleware: [errorMiddleware, csrfMiddleware],
+  functionMiddleware: [attachDashboardAuth],
 }));
