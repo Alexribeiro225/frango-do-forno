@@ -7,7 +7,7 @@ const url = import.meta.env["VITE_SUPABASE_URL"]?.replace(/\/$/, "");
 const anon = import.meta.env["VITE_SUPABASE_ANON_KEY"] || import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
 export const configured = Boolean(url && anon);
 const storageKey = "frango-show-admin-session";
-export type AppUser = { id: string; email?: string; role: "master" | "owner"; subscriptionStatus: string };
+export type AppUser = { id: string; email?: string; role: "master" | "owner"; subscriptionStatus: string; hasAccess: boolean; trialEndsAt: string | null; isBlocked: boolean };
 export type SaaSPlan = { id: number; name: string; description: string; price: number; billing_interval: string; checkout_url: string; kiwify_product_id: string | null; features: string[]; is_active: boolean; sort_order: number };
 type Session = { access_token: string; refresh_token: string; expires_at: number; user: { id: string; email?: string } };
 const getSession = (): Session | null => {
@@ -53,10 +53,51 @@ export async function currentUser(): Promise<AppUser | null> {
   try {
     const access = await token();
     const email = session.user.email || "";
-    if (email.toLowerCase() === "conectstore.app@gmail.com") return { id: session.user.id, email, role: "master", subscriptionStatus: "active" };
-    const rows = await authFetch("/rest/v1/saas_subscriptions?select=status&user_id=eq." + encodeURIComponent(session.user.id) + "&limit=1", {}, access) as Array<{ status: string }>;
-    return { id: session.user.id, email, role: "owner", subscriptionStatus: rows[0]?.status || "pending" };
+    if (email.toLowerCase() === "conectstore.app@gmail.com") return { id: session.user.id, email, role: "master", subscriptionStatus: "active", hasAccess: true, trialEndsAt: null, isBlocked: false };
+    const rows = await authFetch("/rest/v1/saas_subscriptions?select=status,trial_ends_at,is_blocked,current_period_end&user_id=eq." + encodeURIComponent(session.user.id) + "&limit=1", {}, access) as Array<{ status: string; trial_ends_at: string | null; is_blocked: boolean; current_period_end: string | null }>;
+    const row = rows[0];
+    const status = row?.status || "pending";
+    const now = Date.now();
+    const isBlocked = Boolean(row?.is_blocked);
+    const trialEndsAt = row?.trial_ends_at || null;
+    const hasAccess = !isBlocked && ((status === "active" && (!row?.current_period_end || new Date(row.current_period_end).getTime() > now)) || (status === "trial" && !!trialEndsAt && new Date(trialEndsAt).getTime() > now));
+    return { id: session.user.id, email, role: "owner", subscriptionStatus: status, hasAccess, trialEndsAt, isBlocked };
   } catch { saveSession(null); return null; }
+}
+export function trialDaysLeft(trialEndsAt: string | null) {
+  if (!trialEndsAt) return 0;
+  return Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / 86_400_000));
+}
+export async function isEmailRegistered(email: string) {
+  return Boolean(await authFetch("/rest/v1/rpc/email_registered", { method: "POST", body: JSON.stringify({ p_email: email }) }));
+}
+export async function signUpTrial(email: string, password: string) {
+  const data = await authFetch("/auth/v1/signup", { method: "POST", body: JSON.stringify({ email, password }) });
+  if (data.access_token && data.refresh_token && data.user) {
+    saveSession({ access_token: data.access_token, refresh_token: data.refresh_token, expires_at: Date.now() + Number(data.expires_in || 3600) * 1000, user: data.user });
+  }
+  return { confirmationRequired: !data.access_token };
+}
+export async function accessToken() { return token(); }
+export type ManagedUser = { user_id: string; customer_email: string; status: string; trial_ends_at: string | null; is_blocked: boolean; created_at: string };
+export async function listManagedUsers() {
+  return rest("saas_subscriptions", "?select=user_id,customer_email,status,trial_ends_at,is_blocked,created_at&order=created_at.desc") as Promise<ManagedUser[]>;
+}
+export async function updateManagedUser(userId: string, patch: Partial<Pick<ManagedUser, "status" | "trial_ends_at" | "is_blocked">>) {
+  return rest("saas_subscriptions", "?user_id=eq." + encodeURIComponent(userId), { method: "PATCH", body: JSON.stringify(patch) });
+}
+const masterBackupKey = "frango-show-master-backup";
+export async function enterAsUser(tokenHash: string) {
+  const backup = localStorage.getItem(storageKey);
+  const data = await authFetch("/auth/v1/verify", { method: "POST", body: JSON.stringify({ type: "magiclink", token_hash: tokenHash }) });
+  if (backup) localStorage.setItem(masterBackupKey, backup);
+  saveSession({ access_token: data.access_token, refresh_token: data.refresh_token, expires_at: Date.now() + Number(data.expires_in || 3600) * 1000, user: data.user });
+}
+export function isImpersonating() { return typeof localStorage !== "undefined" && !!localStorage.getItem(masterBackupKey); }
+export function returnToMaster() {
+  const backup = localStorage.getItem(masterBackupKey);
+  if (backup) localStorage.setItem(storageKey, backup);
+  localStorage.removeItem(masterBackupKey);
 }
 export async function getMySubscription() {
   const access = await token();
