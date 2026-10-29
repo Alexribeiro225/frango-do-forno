@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { createOrder, loadPublicContent, type Product as CmsProduct } from "@/lib/cms";
-import { addToCart, canAdd } from "@/lib/cart";
+import { addToCart, canAdd, MAX_PER_ITEM } from "@/lib/cart";
 import {
   ArrowLeft, ArrowRight, Check, ChevronDown, Clock3, Instagram, MapPin, Menu,
   Minus, Plus, Search, ShoppingBag, ShoppingCart, Star, Truck, X,

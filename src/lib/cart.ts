@@ -1,6 +1,6 @@
 export type StockedItem = { stock_quantity?: number | null };
 
-const MAX_PER_ITEM = 99;
+export const MAX_PER_ITEM = 99;
 
 /**
  * Whether one more unit of this product may go into the cart.
