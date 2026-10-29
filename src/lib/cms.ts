@@ -190,8 +190,12 @@ export async function createOrder(input: {
     p_payment_method: input.payment_method, p_notes: input.notes, p_items: input.items,
   }) }) as Promise<{ id: number; order_number: number; items: OrderItem[]; subtotal: number; delivery_fee: number | null; total: number }>;
 }
-export async function listOrders() {
-  return rest("orders", "?select=*&order=created_at.desc&limit=100") as Promise<KitchenOrder[]>;
+export async function listOrders(startAt?: string, endExclusive?: string) {
+  const filters = [
+    startAt ? "&created_at=gte." + encodeURIComponent(startAt) : "",
+    endExclusive ? "&created_at=lt." + encodeURIComponent(endExclusive) : "",
+  ].join("");
+  return rest("orders", "?select=*&order=created_at.desc&limit=1000" + filters) as Promise<KitchenOrder[]>;
 }
 export async function updateOrderStatus(id: number, status: KitchenOrder["status"]) {
   return rest("orders", `?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
