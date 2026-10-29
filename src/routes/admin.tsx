@@ -23,7 +23,7 @@ function Admin() {
   const [tab, setTab] = useState<Tab>("products");
   const [section, setSection] = useState<"dashboard" | "users" | "kitchen" | "counter" | Tab>("dashboard");
   const [orders, setOrders] = useState<KitchenOrder[]>([]);
-  const [period, setPeriod] = useState(() => defaultPeriod("7"));
+  const [period, setPeriod] = useState(() => defaultPeriod("today"));
   const [dashboardProducts, setDashboardProducts] = useState<Product[]>([]);
   const [rows, setRows] = useState<Array<Product | Promo | Announcement>>([]);
   const [editing, setEditing] = useState<number | null>(null);
@@ -44,10 +44,15 @@ function Admin() {
   useEffect(() => { if (user?.role === "owner" && user.subscriptionStatus !== "active") getMySubscription().then(value => setSubscriptionCheckout(value.checkout_url)).catch(() => {}); }, [user]);
   useEffect(() => {
     if (!user || (user.role === "owner" && !user.hasAccess)) return;
-    Promise.all([listOrders(periodRange(period)), listRows("products")]).then(([nextOrders, nextProducts]) => {
+    let cancelled = false;
+    const load = () => Promise.all([listOrders(periodRange(period)), listRows("products")]).then(([nextOrders, nextProducts]) => {
+      if (cancelled) return;
       setOrders(nextOrders);
       setDashboardProducts(nextProducts as Product[]);
-    }).catch(e => setError(e instanceof Error ? e.message : "Não foi possível carregar o resumo da loja."));
+    }).catch(e => { if (!cancelled) setError(e instanceof Error ? e.message : "Não foi possível carregar o resumo da loja."); });
+    void load();
+    const timer = window.setInterval(load, 10_000);
+    return () => { cancelled = true; window.clearInterval(timer); };
   }, [user, period]);
   async function refresh() { try { setRows(await listRows(tab)); } catch (e) { setError(message(e)); } }
   function message(e: unknown) { return e instanceof Error ? e.message : "Ocorreu um erro."; }
@@ -182,6 +187,7 @@ function Admin() {
             <section className="saas-panel saas-priority-panel"><div className="saas-panel-heading"><div><h2><AlertTriangle size={19}/> Precisa de atenção</h2><p>O que merece prioridade agora</p></div></div>
               <div className="saas-priority-stats"><div><Clock3 size={15}/><span>EM ABERTO</span><b>{activeKitchenOrders.length}</b></div><div><Package size={15}/><span>ESTOQUE BAIXO</span><b>{lowStockProducts.length}</b></div></div>
               {activeKitchenOrders.slice(0, 3).map(order => <div className="saas-priority-order" key={order.id}><span className="saas-priority-dot"/><b>Pedido #{order.id}</b><small>{order.customer_name} · {order.status === "new" ? "Novo" : "Em preparo"}</small></div>)}
+              {lowStockProducts.length > 0 && <div className="saas-low-stock-list"><span className="saas-low-stock-title">Estoque baixo</span>{lowStockProducts.map(product => <div className="saas-low-stock-item" key={product.id}><b>{product.name}</b><small>{product.stock_quantity === 0 ? "Esgotado" : `Restam ${product.stock_quantity}`}</small></div>)}</div>}
               {!activeKitchenOrders.length && !lowStockProducts.length && <p className="saas-all-clear">Tudo em dia por aqui.</p>}
               <div className="saas-panel-actions"><button onClick={() => setSection("kitchen")}>Abrir cozinha <ArrowRight size={15}/></button>{lowStockProducts.length > 0 && <button onClick={() => { setSection("products"); setTab("products"); }}>Revisar estoque <ArrowRight size={15}/></button>}</div>
             </section>
