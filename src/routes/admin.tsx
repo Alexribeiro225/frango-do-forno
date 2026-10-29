@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { AlertTriangle, ArrowRight, BarChart3, ChefHat, CircleDollarSign, Clock3, CreditCard, ImagePlus, LayoutDashboard, LogOut, Megaphone, Package, Pencil, Plus, ShoppingBag, Store, Trash2, Users } from "lucide-react";
 import { AdminUsers } from "@/components/AdminUsers";
 import { KitchenBoard } from "@/components/KitchenBoard";
+import { DatePeriodFilter, createDatePeriod, type DatePeriod } from "@/components/DatePeriodFilter";
 import { CounterBoard } from "@/components/CounterBoard";
 import { configured, currentUser, isEmailRegistered, isImpersonating, returnToMaster, signUpTrial, trialDaysLeft, deleteRow, getMySubscription, listComboComponents, listOrders, listRows, saveComboComponents, saveRow, signIn, signOut, uploadImage } from "@/lib/cms";
 import type { Announcement, KitchenOrder, Product, Promo } from "@/lib/cms";
@@ -21,6 +22,7 @@ function Admin() {
   const [tab, setTab] = useState<Tab>("products");
   const [section, setSection] = useState<"dashboard" | "users" | "kitchen" | "counter" | Tab>("dashboard");
   const [orders, setOrders] = useState<KitchenOrder[]>([]);
+  const [datePeriod, setDatePeriod] = useState<DatePeriod>(() => createDatePeriod("last7"));
   const [dashboardProducts, setDashboardProducts] = useState<Product[]>([]);
   const [rows, setRows] = useState<Array<Product | Promo | Announcement>>([]);
   const [editing, setEditing] = useState<number | null>(null);
@@ -41,11 +43,11 @@ function Admin() {
   useEffect(() => { if (user?.role === "owner" && user.subscriptionStatus !== "active") getMySubscription().then(value => setSubscriptionCheckout(value.checkout_url)).catch(() => {}); }, [user]);
   useEffect(() => {
     if (!user || (user.role === "owner" && !user.hasAccess)) return;
-    Promise.all([listOrders(), listRows("products")]).then(([nextOrders, nextProducts]) => {
+    Promise.all([listOrders(datePeriod.startAt, datePeriod.endExclusive), listRows("products")]).then(([nextOrders, nextProducts]) => {
       setOrders(nextOrders);
       setDashboardProducts(nextProducts as Product[]);
     }).catch(e => setError(e instanceof Error ? e.message : "Não foi possível carregar o resumo da loja."));
-  }, [user]);
+  }, [user, datePeriod.startAt, datePeriod.endExclusive]);
   async function refresh() { try { setRows(await listRows(tab)); } catch (e) { setError(message(e)); } }
   function message(e: unknown) { return e instanceof Error ? e.message : "Ocorreu um erro."; }
   async function login(e: FormEvent) { e.preventDefault(); setBusy(true); setError(""); setNotice(""); try { if (!(await isEmailRegistered(email))) { setMode("signup"); setPassword(""); return; } setUser(await signIn(email, password)); } catch (e) { setError(message(e)); } finally { setBusy(false); } }
@@ -109,12 +111,19 @@ function Admin() {
   const imageField = <label className="admin-image-field">Imagem<input type="file" accept="image/*" onChange={e => image(e.currentTarget.files?.[0])} /><span><ImagePlus size={18}/> Enviar imagem</span>{typeof form["image_url"] === "string" && form["image_url"] && <img src={form["image_url"]} alt="Prévia" />}</label>;
   const componentProducts = rows.filter((row): row is Product => "category" in row && row.category !== "Combos");
   const eligibleOrders = orders.filter(order => order.status !== "cancelled");
-  const sevenDaysAgo = new Date(); sevenDaysAgo.setHours(0, 0, 0, 0); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-  const recentOrders = eligibleOrders.filter(order => new Date(order.created_at) >= sevenDaysAgo);
+  const recentOrders = eligibleOrders;
   const salesTotal = recentOrders.reduce((sum, order) => sum + Number(order.total || 0), 0);
   const activeKitchenOrders = orders.filter(order => order.status === "new" || order.status === "preparing");
   const lowStockProducts = dashboardProducts.filter(product => product.is_active && product.stock_quantity !== null && product.stock_quantity <= 5);
-  const chartDays = Array.from({ length: 7 }, (_, index) => { const date = new Date(); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() - (6 - index)); const dayOrders = recentOrders.filter(order => { const created = new Date(order.created_at); return created.getFullYear() === date.getFullYear() && created.getMonth() === date.getMonth() && created.getDate() === date.getDate(); }); return { date, count: dayOrders.length, total: dayOrders.reduce((sum, order) => sum + Number(order.total || 0), 0) }; });
+  const chartStart = new Date(datePeriod.startDate + "T00:00:00");
+  const chartEnd = new Date(datePeriod.endDate + "T00:00:00");
+  const chartLength = Math.min(366, Math.max(1, Math.round((chartEnd.getTime() - chartStart.getTime()) / 86400000) + 1));
+  const chartDays = Array.from({ length: chartLength }, (_, index) => {
+    const date = new Date(chartStart); date.setDate(date.getDate() + index);
+    const dateKey = [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
+    const dayOrders = recentOrders.filter(order => { const created = new Date(order.created_at); return [created.getFullYear(), String(created.getMonth() + 1).padStart(2, "0"), String(created.getDate()).padStart(2, "0")].join("-") === dateKey; });
+    return { date, count: dayOrders.length, total: dayOrders.reduce((sum, order) => sum + Number(order.total || 0), 0) };
+  });
   const chartMax = Math.max(1, ...chartDays.map(day => day.total));
   const currency = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   function toggleComboComponent(productId: number, enabled: boolean) {
@@ -159,7 +168,7 @@ function Admin() {
           <header className="saas-page-heading saas-management-heading"><div><span className="admin-eyebrow">{user.role === "master" ? "ADMIN MASTER" : "GESTÃO DA LOJA"}</span><h1>Pedidos e cozinha</h1><p>Pedidos recebidos pelo site · Atualiza a cada 10 segundos</p></div></header>
           <KitchenBoard />
         </section> : section === "dashboard" ? <section className="saas-dashboard">
-          <div className="saas-page-heading"><div><span className="admin-eyebrow">{user.role === "master" ? "ADMIN MASTER" : "GESTÃO DA LOJA"}</span><h1>Dashboard <span className="saas-heading-dot">·</span></h1><p>Visão geral · últimos 7 dias</p></div><div className="saas-range-pill"><Clock3 size={16}/> Últimos 7 dias</div></div>
+          <div className="saas-page-heading"><div><span className="admin-eyebrow">{user.role === "master" ? "ADMIN MASTER" : "GESTÃO DA LOJA"}</span><h1>Dashboard <span className="saas-heading-dot">·</span></h1><p>Visão geral · {datePeriod.label}</p></div><DatePeriodFilter value={datePeriod} onChange={setDatePeriod} /></div>
           <div className="saas-metrics">
             <article className="saas-metric saas-metric-highlight"><div><span className="saas-metric-icon"><ShoppingBag size={19}/></span><span>Pedidos recebidos</span></div><strong>{recentOrders.length}</strong><small><ArrowRight size={14}/> {orders.filter(order => order.status === "new").length} novos</small></article>
             <article className="saas-metric"><div><span className="saas-metric-icon blue"><CircleDollarSign size={19}/></span><span>Vendas no período</span></div><strong>{currency(salesTotal)}</strong><small><BarChart3 size={14}/> {recentOrders.length} pedidos não cancelados</small></article>
@@ -168,8 +177,8 @@ function Admin() {
           </div>
           <div className="saas-dashboard-grid">
             <section className="saas-panel saas-chart-panel" id="sales-chart"><div className="saas-panel-heading"><div><h2>Vendas</h2><p>Valor dos pedidos por dia</p></div><span className="saas-chart-legend"><i/> Total vendido</span></div>
-              <div className="saas-chart">{chartDays.map(day => <div className="saas-chart-column" key={day.date.toISOString()}><div className="saas-chart-track"><span style={{height: `${day.total ? Math.max(8, day.total / chartMax * 100) : 3}%`}} title={currency(day.total)} /></div><small>{new Intl.DateTimeFormat("pt-BR", { weekday: "short" }).format(day.date).replace(".", "")}</small></div>)}</div>
-              {!recentOrders.length && <p className="saas-chart-empty">Os pedidos registrados nos últimos 7 dias aparecerão aqui.</p>}
+              <div className="saas-chart">{chartDays.map(day => <div className="saas-chart-column" key={day.date.toISOString()}><div className="saas-chart-track"><span style={{height: `${day.total ? Math.max(8, day.total / chartMax * 100) : 3}%`}} title={currency(day.total)} /></div><small>{new Intl.DateTimeFormat("pt-BR", { weekday: "short", day: "2-digit" }).format(day.date).replace(".", "")}</small></div>)}</div>
+              {!recentOrders.length && <p className="saas-chart-empty">Não há pedidos no período selecionado.</p>}
             </section>
             <section className="saas-panel saas-priority-panel"><div className="saas-panel-heading"><div><h2><AlertTriangle size={19}/> Precisa de atenção</h2><p>O que merece prioridade agora</p></div></div>
               <div className="saas-priority-stats"><div><Clock3 size={15}/><span>EM ABERTO</span><b>{activeKitchenOrders.length}</b></div><div><Package size={15}/><span>ESTOQUE BAIXO</span><b>{lowStockProducts.length}</b></div></div>
