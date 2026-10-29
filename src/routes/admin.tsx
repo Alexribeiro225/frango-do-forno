@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { AlertTriangle, ArrowRight, BarChart3, ChefHat, CircleDollarSign, Clock3, CreditCard, ImagePlus, LayoutDashboard, LogOut, Megaphone, Package, Pencil, Plus, ShoppingBag, Store, Trash2, Users } from "lucide-react";
 import { AdminUsers } from "@/components/AdminUsers";
 import { KitchenBoard } from "@/components/KitchenBoard";
+import { CounterBoard } from "@/components/CounterBoard";
 import { configured, currentUser, isEmailRegistered, isImpersonating, returnToMaster, signUpTrial, trialDaysLeft, deleteRow, getMySubscription, listComboComponents, listOrders, listRows, saveComboComponents, saveRow, signIn, signOut, uploadImage } from "@/lib/cms";
 import type { Announcement, KitchenOrder, Product, Promo } from "@/lib/cms";
 
@@ -18,7 +19,7 @@ function Admin() {
   const [user, setUser] = useState<Awaited<ReturnType<typeof currentUser>>>(null);
   const [subscriptionCheckout, setSubscriptionCheckout] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("products");
-  const [section, setSection] = useState<"dashboard" | "users" | "kitchen" | Tab>("dashboard");
+  const [section, setSection] = useState<"dashboard" | "users" | "kitchen" | "counter" | Tab>("dashboard");
   const [orders, setOrders] = useState<KitchenOrder[]>([]);
   const [dashboardProducts, setDashboardProducts] = useState<Product[]>([]);
   const [rows, setRows] = useState<Array<Product | Promo | Announcement>>([]);
@@ -130,7 +131,7 @@ function Admin() {
       <div className="saas-nav-group"><span>OPERAÇÃO</span>
         <button className={section === "dashboard" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => setSection("dashboard")}><LayoutDashboard size={19}/> Visão geral</button>
         <button className={section === "kitchen" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => setSection("kitchen")}><ChefHat size={19}/> Pedidos e cozinha</button>
-        <Link className="saas-nav-item" to="/balcao"><Store size={19}/> Venda no balcão</Link>
+        <button className={section === "counter" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => setSection("counter")}><Store size={19}/> Venda no balcão</button>
       </div>
       <div className="saas-nav-group"><span>GESTÃO</span>
         <button className={section === "products" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => { setSection("products"); setTab("products"); setEditing(null); setForm(blank("products")); setComboComponents([]); }}><Package size={19}/> Produtos e combos</button>
@@ -151,7 +152,10 @@ function Admin() {
         {error && <div className="admin-error" role="alert">{error}</div>}{notice && <div className="admin-notice" role="status">{notice}</div>}
         {impersonating && <div className="trial-banner">Você está vendo o sistema como {user.email}. <button onClick={() => { returnToMaster(); window.location.reload(); }}>Voltar ao admin master</button></div>}
         {user.role === "owner" && user.subscriptionStatus === "trial" && <div className="trial-banner">Teste grátis: <b>{trialDaysLeft(user.trialEndsAt)} dia(s) restantes</b>. <Link to="/planos">Escolher um plano</Link></div>}
-        {section === "users" && user.role === "master" ? <AdminUsers /> : section === "kitchen" ? <section className="saas-kitchen-section">
+        {section === "users" && user.role === "master" ? <AdminUsers /> : section === "counter" ? <section className="saas-kitchen-section">
+          <header className="saas-page-heading saas-management-heading"><div><span className="admin-eyebrow">{user.role === "master" ? "ADMIN MASTER" : "GESTÃO DA LOJA"}</span><h1>Venda no balcão</h1><p>Registre a venda e atualize o estoque automaticamente.</p></div></header>
+          <CounterBoard />
+        </section> : section === "kitchen" ? <section className="saas-kitchen-section">
           <header className="saas-page-heading saas-management-heading"><div><span className="admin-eyebrow">{user.role === "master" ? "ADMIN MASTER" : "GESTÃO DA LOJA"}</span><h1>Pedidos e cozinha</h1><p>Pedidos recebidos pelo site · Atualiza a cada 10 segundos</p></div></header>
           <KitchenBoard />
         </section> : section === "dashboard" ? <section className="saas-dashboard">
