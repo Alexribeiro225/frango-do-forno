@@ -29,7 +29,7 @@ function Admin() {
   const [password2, setPassword2] = useState("");
   const [impersonating, setImpersonating] = useState(false);
   useEffect(() => { setImpersonating(isImpersonating()); }, [user]);
-  useEffect(() => { if (user?.role === "owner" && !user.hasAccess && !user.isBlocked) { const t = setTimeout(() => { window.location.href = "/planos"; }, 4000); return () => clearTimeout(t); } }, [user]);
+  useEffect(() => { if (user?.role === "owner" && !user.hasAccess && !user.isBlocked) { const t = setTimeout(() => { window.location.href = "/planos"; }, 4000); return () => clearTimeout(t); } return undefined; }, [user]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
