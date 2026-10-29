@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { createOrder, loadPublicContent, type Product as CmsProduct } from "@/lib/cms";
+import { addToCart, canAdd } from "@/lib/cart";
 import {
   ArrowLeft, ArrowRight, Check, ChevronDown, Clock3, Instagram, MapPin, Menu,
   Minus, Plus, Search, ShoppingBag, ShoppingCart, Star, Truck, X,
@@ -124,17 +125,11 @@ function Index() {
   const quantityFor = (id: number) => quantities[id] ?? 1;
   const changeQuantity = (id: number, amount: number) => {
     const item = catalog.find(product => product.id === id);
-    const remaining = item?.stock_quantity == null ? 99 : Math.min(99, Math.max(1, item.stock_quantity - (cart[id] ?? 0)));
+    if (amount > 0 && !canAdd(item, cart[id] ?? 0)) return;
+    const remaining = item?.stock_quantity == null ? MAX_PER_ITEM : Math.min(MAX_PER_ITEM, Math.max(1, item.stock_quantity - (cart[id] ?? 0)));
     setQuantities(current => ({ ...current, [id]: Math.min(remaining, Math.max(1, (current[id] ?? 1) + amount)) }));
   };
-  const add = (id: number, amount: number) => setCart(current => {
-    const item = catalog.find(product => product.id === id);
-    const maximum = item?.stock_quantity == null ? 99 : Math.min(99, item.stock_quantity);
-    const quantity = Math.min(maximum, Math.max(0, (current[id] ?? 0) + amount));
-    const next = { ...current, [id]: quantity };
-    if (!quantity) delete next[id];
-    return next;
-  });
+  const add = (id: number, amount: number) => setCart(current => addToCart(current, catalog.find(product => product.id === id), id, amount));
   const order = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!lines.length || orderBusy) return;
