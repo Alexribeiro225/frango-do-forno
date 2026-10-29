@@ -26,8 +26,8 @@ function buildPeriod(preset: DatePreset, startDate: string, endDate: string, mon
     custom: labelDate(start) + " – " + labelDate(end),
   };
   return { preset, label: labels[preset], startDate: localKey(start), endDate: localKey(end),
-    startAt: new Date(start.getFullYear(), start.getMonth(), start.getDate()).toISOString(),
-    endExclusive: new Date(next.getFullYear(), next.getMonth(), next.getDate()).toISOString(),
+    startAt: localKey(start) + "T00:00:00-03:00",
+    endExclusive: localKey(next) + "T00:00:00-03:00",
     month: month || localKey(start).slice(0, 7), year: year || String(start.getFullYear()) };
 }
 
