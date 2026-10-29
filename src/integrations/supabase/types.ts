@@ -21,6 +21,7 @@ export type Database = {
           id: number
           image_url: string | null
           is_active: boolean
+          owner_id: string | null
           title: string
           updated_at: string
         }
@@ -30,6 +31,7 @@ export type Database = {
           id?: number
           image_url?: string | null
           is_active?: boolean
+          owner_id?: string | null
           title: string
           updated_at?: string
         }
@@ -39,6 +41,7 @@ export type Database = {
           id?: number
           image_url?: string | null
           is_active?: boolean
+          owner_id?: string | null
           title?: string
           updated_at?: string
         }
@@ -106,6 +109,7 @@ export type Database = {
           id: number
           items: Json
           notes: string
+          owner_id: string | null
           payment_method: string
           status: string
           subtotal: number
@@ -121,6 +125,7 @@ export type Database = {
           id?: number
           items: Json
           notes?: string
+          owner_id?: string | null
           payment_method: string
           status?: string
           subtotal: number
@@ -136,6 +141,7 @@ export type Database = {
           id?: number
           items?: Json
           notes?: string
+          owner_id?: string | null
           payment_method?: string
           status?: string
           subtotal?: number
@@ -153,6 +159,7 @@ export type Database = {
           is_active: boolean
           is_popular: boolean
           name: string
+          owner_id: string | null
           price: number
           sort_order: number
           stock_quantity: number | null
@@ -167,6 +174,7 @@ export type Database = {
           is_active?: boolean
           is_popular?: boolean
           name: string
+          owner_id?: string | null
           price: number
           sort_order?: number
           stock_quantity?: number | null
@@ -181,6 +189,7 @@ export type Database = {
           is_active?: boolean
           is_popular?: boolean
           name?: string
+          owner_id?: string | null
           price?: number
           sort_order?: number
           stock_quantity?: number | null
@@ -196,6 +205,7 @@ export type Database = {
           id: number
           image_url: string | null
           is_active: boolean
+          owner_id: string | null
           starts_at: string | null
           title: string
           updated_at: string
@@ -207,6 +217,7 @@ export type Database = {
           id?: number
           image_url?: string | null
           is_active?: boolean
+          owner_id?: string | null
           starts_at?: string | null
           title: string
           updated_at?: string
@@ -218,6 +229,7 @@ export type Database = {
           id?: number
           image_url?: string | null
           is_active?: boolean
+          owner_id?: string | null
           starts_at?: string | null
           title?: string
           updated_at?: string
@@ -345,6 +357,7 @@ export type Database = {
         }
         Returns: Json
       }
+      current_store_owner: { Args: never; Returns: string }
       email_registered: { Args: { p_email: string }; Returns: boolean }
       has_active_saas_subscription: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
