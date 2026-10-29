@@ -607,3 +607,12 @@
 .saas-brand-logo { width:48px; height:48px; object-fit:contain; border-radius:50%; flex:0 0 auto; }
 .saas-brand b { color:oklch(0.53 0.2 28); }
 .saas-sidebar { background:oklch(0.99 0.006 88); }
+
+.trial-banner { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; padding:.75rem 1rem; margin-bottom:1rem; border-radius:12px; background:oklch(0.8 0.16 75 / .18); border:1px solid oklch(0.8 0.16 75 / .55); color:inherit; font-weight:600; }
+.trial-banner a, .trial-banner button { color:oklch(0.58 0.21 28); font-weight:700; text-decoration:underline; background:none; border:0; cursor:pointer; }
+.admin-user-row { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:.75rem; padding:.9rem 0; border-bottom:1px solid oklch(0.5 0.03 60 / .2); }
+.admin-user-row small { display:block; opacity:.7; margin-top:.2rem; }
+.admin-user-actions { display:flex; flex-wrap:wrap; gap:.4rem; }
+.admin-user-actions button { display:inline-flex; align-items:center; gap:.35rem; padding:.45rem .7rem; border-radius:8px; border:1px solid oklch(0.5 0.03 60 / .35); background:transparent; color:inherit; cursor:pointer; font-size:.85rem; }
+.admin-user-actions button.danger { border-color:oklch(0.58 0.21 28); color:oklch(0.58 0.21 28); }
+.admin-user-actions button:disabled { opacity:.5; }
