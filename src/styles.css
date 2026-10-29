@@ -623,3 +623,10 @@
 .period-picker span { font-weight:600; color:oklch(0.55 0.02 50); }
 .kitchen-status-filter { min-height:42px; border-radius:12px; font-size:13px; }
 .kitchen-board-toolbar { flex-wrap:wrap; }
+
+/* Produto esgotado no cardápio: foto esbranquiçada com tarja */
+.product-card.sold-out .product-photo img { filter: grayscale(.92) brightness(1.5) contrast(.72) saturate(.1); opacity:.5; }
+.product-card.sold-out .product-photo::after { content:""; position:absolute; inset:0; background: linear-gradient(180deg, oklch(0.985 0.008 85 / 80%), oklch(0.96 0.012 80 / 62%)); }
+.product-card.sold-out .product-photo .popular-badge { display:none; }
+.sold-out-strip { position:absolute; top:50%; left:50%; z-index:2; transform:translate(-50%,-50%) rotate(-13deg); display:inline-block; min-width:78%; padding:11px 18px; border-radius:6px; background:var(--primary); color:var(--primary-foreground); font-family:"Bebas Neue",sans-serif; font-size:clamp(20px,3.4vw,30px); letter-spacing:.18em; text-align:center; text-transform:uppercase; box-shadow:0 8px 22px oklch(0.3 0.05 40 / 28%); }
+

@@ -186,10 +186,11 @@ function Index() {
     ["Avaliações", "#avaliacoes"], ["Localização", "#visite"],
   ];
   const ProductCard = ({ item, favorite = false }: { item: Item; favorite?: boolean }) => (
-    <article className={`product-card ${favorite ? "favorite-card" : ""}`}>
+    <article className={`product-card ${favorite ? "favorite-card" : ""}${item.stock_quantity === 0 ? " sold-out" : ""}`}>
       <div className="product-photo">
         <img src={item.img} alt={item.name} loading="lazy" />
         {item.popular && !favorite && <span className="popular-badge"><Star size={13} fill="currentColor" /> Mais pedido</span>}
+        {item.stock_quantity === 0 && <span className="sold-out-strip" aria-hidden="true">Esgotado</span>}
       </div>
       <div className="product-info">
         {!favorite && <span className="product-category">{item.cat}</span>}
