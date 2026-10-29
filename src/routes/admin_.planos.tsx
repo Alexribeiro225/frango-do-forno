@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect,useState,type FormEvent } from "react";
 import { ArrowLeft,LogOut,Pencil,Plus,Trash2 } from "lucide-react";
 import { configured,currentUser,deletePlan,listPlans,savePlan,signOut,type SaaSPlan } from "@/lib/cms";
