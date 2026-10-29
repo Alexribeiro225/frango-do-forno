@@ -29,10 +29,10 @@ function Admin() {
   const [notice, setNotice] = useState("");
   const [comboComponents, setComboComponents] = useState<Array<{ product_id: number; quantity: number }>>([]);
   useEffect(() => { currentUser().then(setUser); }, []);
-  useEffect(() => { if (user?.role === "master" || user?.subscriptionStatus === "active") refresh(); }, [user, tab]);
+  useEffect(() => { if (user?.role === "master" || user?.hasAccess) refresh(); }, [user, tab]);
   useEffect(() => { if (user?.role === "owner" && user.subscriptionStatus !== "active") getMySubscription().then(value => setSubscriptionCheckout(value.checkout_url)).catch(() => {}); }, [user]);
   useEffect(() => {
-    if (!user || (user.role === "owner" && user.subscriptionStatus !== "active")) return;
+    if (!user || (user.role === "owner" && !user.hasAccess)) return;
     Promise.all([listOrders(), listRows("products")]).then(([nextOrders, nextProducts]) => {
       setOrders(nextOrders);
       setDashboardProducts(nextProducts as Product[]);
@@ -85,7 +85,7 @@ function Admin() {
   }
   if (!configured) return <main className="admin-page"><section className="admin-login"><span className="admin-eyebrow">FRANGO SHOW · ADMINISTRAÇÃO</span><h1>Configure o painel</h1><p>O painel foi criado. Para guardar produtos, imagens e promoções com segurança, primeiro conecte um projeto Supabase seguindo o guia incluído no repositório.</p><a className="admin-primary" href="https://github.com/Alexribeiro225/frango-do-forno/blob/main/ADMIN_SETUP.md">Ver instruções de configuração</a></section></main>;
   if (!user) return <main className="admin-page"><form className="admin-login" onSubmit={login}><span className="admin-eyebrow">FRANGO SHOW · GESTÃO</span><h1>Entrar no painel</h1><p>Acesse com o login da loja ou do admin master.</p><label>E-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label><label>Senha<input type="password" value={password} onChange={e => setPassword(e.target.value)} required /></label>{error && <div className="admin-error">{error}</div>}<button className="admin-primary" disabled={busy}>{busy ? "Entrando..." : "Entrar"}</button></form></main>;
-  if (user.role === "owner" && user.subscriptionStatus !== "active") return <main className="admin-page"><section className="admin-login"><span className="admin-eyebrow">FRANGO SHOW · ASSINATURA</span><h1>Ative o acesso à loja</h1><p>O pagamento ainda não foi confirmado pela Kiwify. Assim que a confirmação chegar, o painel será liberado automaticamente.</p>{subscriptionCheckout && <a className="admin-primary" href={subscriptionCheckout}>Continuar pagamento</a>}<a className="admin-logout" href="/planos">Ver planos</a><button className="admin-logout" onClick={()=>{signOut();setUser(null);}}>Sair</button></section></main>;
+  if (user.role === "owner" && !user.hasAccess) return <main className="admin-page"><section className="admin-login"><span className="admin-eyebrow">FRANGO SHOW · ASSINATURA</span><h1>Ative o acesso à loja</h1><p>O pagamento ainda não foi confirmado pela Kiwify. Assim que a confirmação chegar, o painel será liberado automaticamente.</p>{subscriptionCheckout && <a className="admin-primary" href={subscriptionCheckout}>Continuar pagamento</a>}<a className="admin-logout" href="/planos">Ver planos</a><button className="admin-logout" onClick={()=>{signOut();setUser(null);}}>Sair</button></section></main>;
   const imageField = <label className="admin-image-field">Imagem<input type="file" accept="image/*" onChange={e => image(e.currentTarget.files?.[0])} /><span><ImagePlus size={18}/> Enviar imagem</span>{typeof form["image_url"] === "string" && form["image_url"] && <img src={form["image_url"]} alt="Prévia" />}</label>;
   const componentProducts = rows.filter((row): row is Product => "category" in row && row.category !== "Combos");
   const eligibleOrders = orders.filter(order => order.status !== "cancelled");
