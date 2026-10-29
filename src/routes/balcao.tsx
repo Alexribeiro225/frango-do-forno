@@ -4,7 +4,13 @@ import { LogOut } from "lucide-react";
 import { configured, currentUser, signIn, signOut } from "@/lib/cms";
 import { CounterBoard } from "@/components/CounterBoard";
 
-export const Route = createFileRoute("/balcao")({ component: Counter });
+export const Route = createFileRoute("/balcao")({ component: Counter, head: () => ({ meta: [
+  { title: "Venda no balcão | Frango Show Rotisserie" },
+  { name: "description", content: "Caixa e registro de vendas presenciais da Frango Show Rotisserie." },
+  { property: "og:title", content: "Venda no balcão | Frango Show Rotisserie" },
+  { property: "og:description", content: "Caixa e registro de vendas presenciais da Frango Show Rotisserie." },
+  { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+] }) });
 const logoImg = "/images/frango-show-logo.webp";
 
 function Counter() {
