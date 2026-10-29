@@ -120,7 +120,7 @@ function Kitchen() {
     </form>
   </main>;
 
-  if (user.role === "owner" && user.subscriptionStatus !== "active") return <main className="kitchen-page kitchen-login-wrap"><section className="kitchen-login"><h1>Assinatura não ativa</h1><p>O acesso à cozinha será liberado após a confirmação do pagamento.</p><a href="/planos">Ver planos</a><button onClick={()=>{signOut();setUser(null);}}>Sair</button></section></main>;
+  if (user.role === "owner" && !user.hasAccess) return <main className="kitchen-page kitchen-login-wrap"><section className="kitchen-login"><h1>Assinatura não ativa</h1><p>O acesso à cozinha será liberado após a confirmação do pagamento.</p><a href="/planos">Ver planos</a><button onClick={()=>{signOut();setUser(null);}}>Sair</button></section></main>;
 
   return <main className="kitchen-page">
     <header className="kitchen-header">

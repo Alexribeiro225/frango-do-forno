@@ -274,10 +274,12 @@ export type Database = {
           created_at: string
           current_period_end: string | null
           customer_email: string
+          is_blocked: boolean
           plan_id: number | null
           provider: string
           provider_subscription_id: string | null
           status: string
+          trial_ends_at: string | null
           updated_at: string
           user_id: string
         }
@@ -285,10 +287,12 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           customer_email: string
+          is_blocked?: boolean
           plan_id?: number | null
           provider?: string
           provider_subscription_id?: string | null
           status?: string
+          trial_ends_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -296,10 +300,12 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           customer_email?: string
+          is_blocked?: boolean
           plan_id?: number | null
           provider?: string
           provider_subscription_id?: string | null
           status?: string
+          trial_ends_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -339,6 +345,7 @@ export type Database = {
         }
         Returns: Json
       }
+      email_registered: { Args: { p_email: string }; Returns: boolean }
       has_active_saas_subscription: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
       save_combo_components: {

@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { AlertTriangle, ArrowRight, BarChart3, ChefHat, CircleDollarSign, Clock3, CreditCard, ImagePlus, LayoutDashboard, LogOut, Megaphone, Package, Pencil, Plus, ShoppingBag, Store, Trash2 } from "lucide-react";
-import { configured, currentUser, deleteRow, getMySubscription, listComboComponents, listOrders, listRows, saveComboComponents, saveRow, signIn, signOut, uploadImage } from "@/lib/cms";
+import { AlertTriangle, ArrowRight, BarChart3, ChefHat, CircleDollarSign, Clock3, CreditCard, ImagePlus, LayoutDashboard, LogOut, Megaphone, Package, Pencil, Plus, ShoppingBag, Store, Trash2, Users } from "lucide-react";
+import { AdminUsers } from "@/components/AdminUsers";
+import { configured, currentUser, isEmailRegistered, isImpersonating, returnToMaster, signUpTrial, trialDaysLeft, deleteRow, getMySubscription, listComboComponents, listOrders, listRows, saveComboComponents, saveRow, signIn, signOut, uploadImage } from "@/lib/cms";
 import type { Announcement, KitchenOrder, Product, Promo } from "@/lib/cms";
 
 export const Route = createFileRoute("/admin")({ component: Admin });
@@ -16,7 +17,7 @@ function Admin() {
   const [user, setUser] = useState<Awaited<ReturnType<typeof currentUser>>>(null);
   const [subscriptionCheckout, setSubscriptionCheckout] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("products");
-  const [section, setSection] = useState<"dashboard" | Tab>("dashboard");
+  const [section, setSection] = useState<"dashboard" | "users" | Tab>("dashboard");
   const [orders, setOrders] = useState<KitchenOrder[]>([]);
   const [dashboardProducts, setDashboardProducts] = useState<Product[]>([]);
   const [rows, setRows] = useState<Array<Product | Promo | Announcement>>([]);
@@ -24,15 +25,20 @@ function Admin() {
   const [form, setForm] = useState<Record<string, unknown>>(blank("products"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [password2, setPassword2] = useState("");
+  const [impersonating, setImpersonating] = useState(false);
+  useEffect(() => { setImpersonating(isImpersonating()); }, [user]);
+  useEffect(() => { if (user?.role === "owner" && !user.hasAccess && !user.isBlocked) { const t = setTimeout(() => { window.location.href = "/planos"; }, 4000); return () => clearTimeout(t); } return undefined; }, [user]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [comboComponents, setComboComponents] = useState<Array<{ product_id: number; quantity: number }>>([]);
   useEffect(() => { currentUser().then(setUser); }, []);
-  useEffect(() => { if (user?.role === "master" || user?.subscriptionStatus === "active") refresh(); }, [user, tab]);
+  useEffect(() => { if (user?.role === "master" || user?.hasAccess) refresh(); }, [user, tab]);
   useEffect(() => { if (user?.role === "owner" && user.subscriptionStatus !== "active") getMySubscription().then(value => setSubscriptionCheckout(value.checkout_url)).catch(() => {}); }, [user]);
   useEffect(() => {
-    if (!user || (user.role === "owner" && user.subscriptionStatus !== "active")) return;
+    if (!user || (user.role === "owner" && !user.hasAccess)) return;
     Promise.all([listOrders(), listRows("products")]).then(([nextOrders, nextProducts]) => {
       setOrders(nextOrders);
       setDashboardProducts(nextProducts as Product[]);
@@ -40,7 +46,18 @@ function Admin() {
   }, [user]);
   async function refresh() { try { setRows(await listRows(tab)); } catch (e) { setError(message(e)); } }
   function message(e: unknown) { return e instanceof Error ? e.message : "Ocorreu um erro."; }
-  async function login(e: FormEvent) { e.preventDefault(); setBusy(true); setError(""); try { setUser(await signIn(email, password)); } catch (e) { setError(message(e)); } finally { setBusy(false); } }
+  async function login(e: FormEvent) { e.preventDefault(); setBusy(true); setError(""); setNotice(""); try { if (!(await isEmailRegistered(email))) { setMode("signup"); setPassword(""); return; } setUser(await signIn(email, password)); } catch (e) { setError(message(e)); } finally { setBusy(false); } }
+  async function register(e: FormEvent) {
+    e.preventDefault(); setError(""); setNotice("");
+    if (password.length < 8) { setError("A senha precisa ter pelo menos 8 caracteres."); return; }
+    if (password !== password2) { setError("As senhas não conferem."); return; }
+    setBusy(true);
+    try {
+      const r = await signUpTrial(email, password);
+      if (r.confirmationRequired) { setMode("login"); setNotice("Conta criada! Confirme o e-mail que enviamos e depois entre para começar seus 15 dias grátis."); }
+      else setUser(await currentUser());
+    } catch (e) { setError(message(e)); } finally { setBusy(false); }
+  }
   async function edit(row: Product | Promo | Announcement) {
     setEditing(row.id);
     const data = { ...row } as unknown as Record<string, unknown>;
@@ -84,8 +101,9 @@ function Admin() {
     try { await deleteRow(tab, id); await refresh(); } catch (e) { setError(message(e)); }
   }
   if (!configured) return <main className="admin-page"><section className="admin-login"><span className="admin-eyebrow">FRANGO SHOW · ADMINISTRAÇÃO</span><h1>Configure o painel</h1><p>O painel foi criado. Para guardar produtos, imagens e promoções com segurança, primeiro conecte um projeto Supabase seguindo o guia incluído no repositório.</p><a className="admin-primary" href="https://github.com/Alexribeiro225/frango-do-forno/blob/main/ADMIN_SETUP.md">Ver instruções de configuração</a></section></main>;
-  if (!user) return <main className="admin-page"><form className="admin-login" onSubmit={login}><span className="admin-eyebrow">FRANGO SHOW · GESTÃO</span><h1>Entrar no painel</h1><p>Acesse com o login da loja ou do admin master.</p><label>E-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label><label>Senha<input type="password" value={password} onChange={e => setPassword(e.target.value)} required /></label>{error && <div className="admin-error">{error}</div>}<button className="admin-primary" disabled={busy}>{busy ? "Entrando..." : "Entrar"}</button></form></main>;
-  if (user.role === "owner" && user.subscriptionStatus !== "active") return <main className="admin-page"><section className="admin-login"><span className="admin-eyebrow">FRANGO SHOW · ASSINATURA</span><h1>Ative o acesso à loja</h1><p>O pagamento ainda não foi confirmado pela Kiwify. Assim que a confirmação chegar, o painel será liberado automaticamente.</p>{subscriptionCheckout && <a className="admin-primary" href={subscriptionCheckout}>Continuar pagamento</a>}<a className="admin-logout" href="/planos">Ver planos</a><button className="admin-logout" onClick={()=>{signOut();setUser(null);}}>Sair</button></section></main>;
+  if (!user && mode === "signup") return <main className="admin-page"><form className="admin-login" onSubmit={register}><span className="admin-eyebrow">FRANGO SHOW · NOVA CONTA</span><h1>Teste grátis por 15 dias</h1><p>Não encontramos uma conta com este e-mail. Crie a sua agora: <b>15 dias grátis, sem precisar de cartão</b>.</p><label>E-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label><label>Crie uma senha<input type="password" minLength={8} value={password} onChange={e => setPassword(e.target.value)} required /></label><label>Repita a senha<input type="password" minLength={8} value={password2} onChange={e => setPassword2(e.target.value)} required /></label>{error && <div className="admin-error">{error}</div>}<button className="admin-primary" disabled={busy}>{busy ? "Criando..." : "Começar teste grátis"}</button><button type="button" className="admin-logout" onClick={() => { setMode("login"); setError(""); }}>Já tenho conta</button></form></main>;
+  if (!user) return <main className="admin-page"><form className="admin-login" onSubmit={login}><span className="admin-eyebrow">FRANGO SHOW · GESTÃO</span><h1>Entrar no painel</h1><p>Acesse com o login da loja ou do admin master. E-mail novo? Você poderá criar uma conta com 15 dias grátis.</p><label>E-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label><label>Senha<input type="password" value={password} onChange={e => setPassword(e.target.value)} /></label>{notice && <div className="admin-notice">{notice}</div>}{error && <div className="admin-error">{error}</div>}<button className="admin-primary" disabled={busy}>{busy ? "Entrando..." : "Entrar"}</button></form></main>;
+  if (user.role === "owner" && !user.hasAccess) return <main className="admin-page"><section className="admin-login"><span className="admin-eyebrow">FRANGO SHOW · ASSINATURA</span><h1>{user.isBlocked ? "Acesso bloqueado" : user.subscriptionStatus === "trial" ? "Seu teste grátis terminou" : "Ative o acesso à loja"}</h1><p>{user.isBlocked ? "O acesso desta conta foi bloqueado. Fale com o suporte." : "Escolha um plano para continuar usando o painel. Vamos te levar para a área de planos em instantes."}</p>{subscriptionCheckout && <a className="admin-primary" href={subscriptionCheckout}>Continuar pagamento</a>}<a className="admin-logout" href="/planos">Ver planos</a>{impersonating && <button className="admin-logout" onClick={()=>{returnToMaster();window.location.reload();}}>Voltar ao admin master</button>}<button className="admin-logout" onClick={()=>{signOut();setUser(null);}}>Sair</button></section></main>;
   const imageField = <label className="admin-image-field">Imagem<input type="file" accept="image/*" onChange={e => image(e.currentTarget.files?.[0])} /><span><ImagePlus size={18}/> Enviar imagem</span>{typeof form["image_url"] === "string" && form["image_url"] && <img src={form["image_url"]} alt="Prévia" />}</label>;
   const componentProducts = rows.filter((row): row is Product => "category" in row && row.category !== "Combos");
   const eligibleOrders = orders.filter(order => order.status !== "cancelled");
@@ -120,6 +138,7 @@ function Admin() {
         <a className="saas-nav-item" href="#sales-chart" onClick={() => setSection("dashboard")}><BarChart3 size={19}/> Relatórios</a>
       </div>
       <div className="saas-sidebar-bottom">
+        {user.role === "master" && <button className={section === "users" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => setSection("users")}><Users size={19}/> Usuários</button>}
         {user.role === "master" && <a className="saas-nav-item" href="/admin/planos"><CreditCard size={19}/> Planos SaaS</a>}
         <span className="saas-store-chip"><span/> Loja conectada</span>
         <small>{user.email || (user.role === "master" ? "Admin master" : "Conta da loja")}</small>
@@ -129,7 +148,9 @@ function Admin() {
       <header className="saas-topbar"><div className="saas-connection"><span/> Sistema operacional</div><div className="saas-topbar-actions">{user.role === "master" && <a href="/admin/planos" className="saas-top-link"><CreditCard size={16}/> Planos</a>}<span className="saas-avatar">{(user.email || "F").charAt(0).toUpperCase()}</span><button className="saas-top-link" onClick={() => { signOut(); setUser(null); }}><LogOut size={16}/> Sair</button></div></header>
       <div className="saas-content">
         {error && <div className="admin-error" role="alert">{error}</div>}{notice && <div className="admin-notice" role="status">{notice}</div>}
-        {section === "dashboard" ? <section className="saas-dashboard">
+        {impersonating && <div className="trial-banner">Você está vendo o sistema como {user.email}. <button onClick={() => { returnToMaster(); window.location.reload(); }}>Voltar ao admin master</button></div>}
+        {user.role === "owner" && user.subscriptionStatus === "trial" && <div className="trial-banner">Teste grátis: <b>{trialDaysLeft(user.trialEndsAt)} dia(s) restantes</b>. <a href="/planos">Escolher um plano</a></div>}
+        {section === "users" && user.role === "master" ? <AdminUsers /> : section === "dashboard" ? <section className="saas-dashboard">
           <div className="saas-page-heading"><div><span className="admin-eyebrow">{user.role === "master" ? "ADMIN MASTER" : "GESTÃO DA LOJA"}</span><h1>Dashboard <span className="saas-heading-dot">·</span></h1><p>Visão geral · últimos 7 dias</p></div><div className="saas-range-pill"><Clock3 size={16}/> Últimos 7 dias</div></div>
           <div className="saas-metrics">
             <article className="saas-metric saas-metric-highlight"><div><span className="saas-metric-icon"><ShoppingBag size={19}/></span><span>Pedidos recebidos</span></div><strong>{recentOrders.length}</strong><small><ArrowRight size={14}/> {orders.filter(order => order.status === "new").length} novos</small></article>
