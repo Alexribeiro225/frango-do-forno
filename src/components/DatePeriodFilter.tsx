@@ -38,12 +38,17 @@ export function createDatePeriod(preset: DatePreset): DatePeriod {
     const start = new Date(today); start.setDate(start.getDate() - (Number(preset.slice(4)) - 1));
     return buildPeriod(preset, localKey(start), localKey(today));
   }
-  if (preset === "thisMonth" || preset === "month") {
-    const start = preset === "month" ? new Date(today.getFullYear(), today.getMonth(), 1) : new Date(today.getFullYear(), today.getMonth(), 1);
+  if (preset === "thisMonth") {
+    const start = new Date(today.getFullYear(), today.getMonth(), 1);
+    return buildPeriod(preset, localKey(start), localKey(today));
+  }
+  if (preset === "month") {
+    const start = new Date(today.getFullYear(), today.getMonth(), 1);
     const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
     return buildPeriod(preset, localKey(start), localKey(end), localKey(today).slice(0, 7));
   }
-  if (preset === "thisYear" || preset === "year") return buildPeriod(preset, today.getFullYear() + "-01-01", today.getFullYear() + "-12-31", "", String(today.getFullYear()));
+  if (preset === "thisYear") return buildPeriod(preset, today.getFullYear() + "-01-01", localKey(today), "", String(today.getFullYear()));
+  if (preset === "year") return buildPeriod(preset, today.getFullYear() + "-01-01", today.getFullYear() + "-12-31", "", String(today.getFullYear()));
   return buildPeriod(preset, localKey(today), localKey(today));
 }
 
