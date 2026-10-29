@@ -28,7 +28,7 @@ function Plans() {
   }
   return <main className="admin-page" style={{minHeight:"100vh"}}>
     <div className="admin-wrap">
-      <header className="admin-header"><div><span className="admin-eyebrow">FRANGO SHOW · GESTÃO</span><h1>Planos para sua loja</h1><p>Escolha um plano e crie seu acesso para começar.</p></div><a className="admin-logout" href="/admin">Já tenho uma conta</a></header>
+      <header className="admin-header"><div><span className="admin-eyebrow">FRANGO SHOW · GESTÃO</span><h1>Planos para sua loja</h1><p>Escolha um plano e crie seu acesso para começar.</p></div><Link className="admin-logout" to="/admin">Já tenho uma conta</Link></header>
       {!configured&&<div className="admin-error">O sistema de cadastro ainda está sendo preparado.</div>}
       {error&&<div className="admin-error" role="alert">{error}</div>}
       {!plans.length&&!error&&<section className="admin-card"><h2>{loaded?"Nenhum plano está disponível no momento.":"Carregando planos…"}</h2></section>}

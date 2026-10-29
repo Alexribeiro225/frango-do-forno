@@ -37,10 +37,10 @@ function AdminPlans(){
     try{await deletePlan(id);await refresh();}catch(e){setError(e instanceof Error?e.message:"Falha ao excluir plano.");}
   }
   if(!configured)return <main className="admin-page"><section className="admin-login"><h1>Banco não configurado</h1></section></main>;
-  if(!user)return <main className="admin-page"><section className="admin-login"><h1>Entre como admin master</h1><a href="/admin">Ir para o login</a></section></main>;
-  if(user.role!=="master")return <main className="admin-page"><section className="admin-login"><h1>Acesso restrito</h1><p>Esta área é exclusiva do admin master.</p><a href="/admin">Voltar ao painel</a></section></main>;
+  if(!user)return <main className="admin-page"><section className="admin-login"><h1>Entre como admin master</h1><Link to="/admin">Ir para o login</Link></section></main>;
+  if(user.role!=="master")return <main className="admin-page"><section className="admin-login"><h1>Acesso restrito</h1><p>Esta área é exclusiva do admin master.</p><Link to="/admin">Voltar ao painel</Link></section></main>;
   return <main className="admin-page"><div className="admin-wrap">
-    <header className="admin-header"><div><span className="admin-eyebrow">ADMIN MASTER · SAAS</span><h1>Planos e cobrança</h1><p>Cadastre os links de checkout e os produtos da Kiwify.</p></div><div className="admin-header-actions"><a className="admin-logout" href="/admin"><ArrowLeft size={17}/> Painel da loja</a><button className="admin-logout" onClick={()=>{signOut();setUser(null);}}><LogOut size={17}/> Sair</button></div></header>
+    <header className="admin-header"><div><span className="admin-eyebrow">ADMIN MASTER · SAAS</span><h1>Planos e cobrança</h1><p>Cadastre os links de checkout e os produtos da Kiwify.</p></div><div className="admin-header-actions"><Link className="admin-logout" to="/admin"><ArrowLeft size={17}/> Painel da loja</Link><button className="admin-logout" onClick={()=>{signOut();setUser(null);}}><LogOut size={17}/> Sair</button></div></header>
     {error&&<div className="admin-error" role="alert">{error}</div>}{notice&&<div className="admin-notice">{notice}</div>}
     <section className="admin-card" id="saas-plan-form"><div className="admin-card-head"><h2>{editing?"Editar":"Novo"} plano</h2>{editing&&<button type="button" onClick={fresh}>Cancelar</button>}</div>
       <form className="admin-form" onSubmit={submit}>
