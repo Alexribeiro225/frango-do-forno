@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { AlertTriangle, ArrowRight, BarChart3, ChefHat, CircleDollarSign, Clock3, CreditCard, ImagePlus, LayoutDashboard, LogOut, Megaphone, Package, Pencil, Plus, ShoppingBag, Store, Trash2, Users } from "lucide-react";
 import { AdminUsers } from "@/components/AdminUsers";
@@ -103,7 +103,7 @@ function Admin() {
   if (!configured) return <main className="admin-page"><section className="admin-login"><span className="admin-eyebrow">FRANGO SHOW · ADMINISTRAÇÃO</span><h1>Configure o painel</h1><p>O painel foi criado. Para guardar produtos, imagens e promoções com segurança, primeiro conecte um projeto Supabase seguindo o guia incluído no repositório.</p><a className="admin-primary" href="https://github.com/Alexribeiro225/frango-do-forno/blob/main/ADMIN_SETUP.md">Ver instruções de configuração</a></section></main>;
   if (!user && mode === "signup") return <main className="admin-page"><form className="admin-login" onSubmit={register}><span className="admin-eyebrow">FRANGO SHOW · NOVA CONTA</span><h1>Teste grátis por 15 dias</h1><p>Não encontramos uma conta com este e-mail. Crie a sua agora: <b>15 dias grátis, sem precisar de cartão</b>.</p><label>E-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label><label>Crie uma senha<input type="password" minLength={8} value={password} onChange={e => setPassword(e.target.value)} required /></label><label>Repita a senha<input type="password" minLength={8} value={password2} onChange={e => setPassword2(e.target.value)} required /></label>{error && <div className="admin-error">{error}</div>}<button className="admin-primary" disabled={busy}>{busy ? "Criando..." : "Começar teste grátis"}</button><button type="button" className="admin-logout" onClick={() => { setMode("login"); setError(""); }}>Já tenho conta</button></form></main>;
   if (!user) return <main className="admin-page"><form className="admin-login" onSubmit={login}><span className="admin-eyebrow">FRANGO SHOW · GESTÃO</span><h1>Entrar no painel</h1><p>Acesse com o login da loja ou do admin master. E-mail novo? Você poderá criar uma conta com 15 dias grátis.</p><label>E-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label><label>Senha<input type="password" value={password} onChange={e => setPassword(e.target.value)} /></label>{notice && <div className="admin-notice">{notice}</div>}{error && <div className="admin-error">{error}</div>}<button className="admin-primary" disabled={busy}>{busy ? "Entrando..." : "Entrar"}</button></form></main>;
-  if (user.role === "owner" && !user.hasAccess) return <main className="admin-page"><section className="admin-login"><span className="admin-eyebrow">FRANGO SHOW · ASSINATURA</span><h1>{user.isBlocked ? "Acesso bloqueado" : user.subscriptionStatus === "trial" ? "Seu teste grátis terminou" : "Ative o acesso à loja"}</h1><p>{user.isBlocked ? "O acesso desta conta foi bloqueado. Fale com o suporte." : "Escolha um plano para continuar usando o painel. Vamos te levar para a área de planos em instantes."}</p>{subscriptionCheckout && <a className="admin-primary" href={subscriptionCheckout}>Continuar pagamento</a>}<a className="admin-logout" href="/planos">Ver planos</a>{impersonating && <button className="admin-logout" onClick={()=>{returnToMaster();window.location.reload();}}>Voltar ao admin master</button>}<button className="admin-logout" onClick={()=>{signOut();setUser(null);}}>Sair</button></section></main>;
+  if (user.role === "owner" && !user.hasAccess) return <main className="admin-page"><section className="admin-login"><span className="admin-eyebrow">FRANGO SHOW · ASSINATURA</span><h1>{user.isBlocked ? "Acesso bloqueado" : user.subscriptionStatus === "trial" ? "Seu teste grátis terminou" : "Ative o acesso à loja"}</h1><p>{user.isBlocked ? "O acesso desta conta foi bloqueado. Fale com o suporte." : "Escolha um plano para continuar usando o painel. Vamos te levar para a área de planos em instantes."}</p>{subscriptionCheckout && <a className="admin-primary" href={subscriptionCheckout}>Continuar pagamento</a>}<Link className="admin-logout" to="/planos">Ver planos</Link>{impersonating && <button className="admin-logout" onClick={()=>{returnToMaster();window.location.reload();}}>Voltar ao admin master</button>}<button className="admin-logout" onClick={()=>{signOut();setUser(null);}}>Sair</button></section></main>;
   const imageField = <label className="admin-image-field">Imagem<input type="file" accept="image/*" onChange={e => image(e.currentTarget.files?.[0])} /><span><ImagePlus size={18}/> Enviar imagem</span>{typeof form["image_url"] === "string" && form["image_url"] && <img src={form["image_url"]} alt="Prévia" />}</label>;
   const componentProducts = rows.filter((row): row is Product => "category" in row && row.category !== "Combos");
   const eligibleOrders = orders.filter(order => order.status !== "cancelled");
@@ -125,11 +125,11 @@ function Admin() {
   }
   return <main className="admin-page saas-admin-page">
     <aside className="saas-sidebar">
-      <a className="saas-brand" href="/" aria-label="Frango Show, abrir loja"><img src="/images/frango-show-logo.webp" alt="" className="saas-brand-logo" /><span><b>FRANGO SHOW</b><small>ROTISSERIE · PAINEL</small></span></a>
+      <Link className="saas-brand" to="/" aria-label="Frango Show, abrir loja"><img src="/images/frango-show-logo.webp" alt="" className="saas-brand-logo" /><span><b>FRANGO SHOW</b><small>ROTISSERIE · PAINEL</small></span></Link>
       <div className="saas-nav-group"><span>OPERAÇÃO</span>
         <button className={section === "dashboard" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => setSection("dashboard")}><LayoutDashboard size={19}/> Visão geral</button>
-        <a className="saas-nav-item" href="/cozinha"><ChefHat size={19}/> Pedidos e cozinha</a>
-        <a className="saas-nav-item" href="/balcao"><Store size={19}/> Venda no balcão</a>
+        <Link className="saas-nav-item" to="/cozinha"><ChefHat size={19}/> Pedidos e cozinha</Link>
+        <Link className="saas-nav-item" to="/balcao"><Store size={19}/> Venda no balcão</Link>
       </div>
       <div className="saas-nav-group"><span>GESTÃO</span>
         <button className={section === "products" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => { setSection("products"); setTab("products"); setEditing(null); setForm(blank("products")); setComboComponents([]); }}><Package size={19}/> Produtos e combos</button>
@@ -139,17 +139,17 @@ function Admin() {
       </div>
       <div className="saas-sidebar-bottom">
         {user.role === "master" && <button className={section === "users" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => setSection("users")}><Users size={19}/> Usuários</button>}
-        {user.role === "master" && <a className="saas-nav-item" href="/admin/planos"><CreditCard size={19}/> Planos SaaS</a>}
+        {user.role === "master" && <Link className="saas-nav-item" to="/admin/planos"><CreditCard size={19}/> Planos SaaS</Link>}
         <span className="saas-store-chip"><span/> Loja conectada</span>
         <small>{user.email || (user.role === "master" ? "Admin master" : "Conta da loja")}</small>
       </div>
     </aside>
     <div className="saas-main">
-      <header className="saas-topbar"><div className="saas-connection"><span/> Sistema operacional</div><div className="saas-topbar-actions">{user.role === "master" && <a href="/admin/planos" className="saas-top-link"><CreditCard size={16}/> Planos</a>}<span className="saas-avatar">{(user.email || "F").charAt(0).toUpperCase()}</span><button className="saas-top-link" onClick={() => { signOut(); setUser(null); }}><LogOut size={16}/> Sair</button></div></header>
+      <header className="saas-topbar"><div className="saas-connection"><span/> Sistema operacional</div><div className="saas-topbar-actions">{user.role === "master" && <Link to="/admin/planos" className="saas-top-link"><CreditCard size={16}/> Planos</Link>}<span className="saas-avatar">{(user.email || "F").charAt(0).toUpperCase()}</span><button className="saas-top-link" onClick={() => { signOut(); setUser(null); }}><LogOut size={16}/> Sair</button></div></header>
       <div className="saas-content">
         {error && <div className="admin-error" role="alert">{error}</div>}{notice && <div className="admin-notice" role="status">{notice}</div>}
         {impersonating && <div className="trial-banner">Você está vendo o sistema como {user.email}. <button onClick={() => { returnToMaster(); window.location.reload(); }}>Voltar ao admin master</button></div>}
-        {user.role === "owner" && user.subscriptionStatus === "trial" && <div className="trial-banner">Teste grátis: <b>{trialDaysLeft(user.trialEndsAt)} dia(s) restantes</b>. <a href="/planos">Escolher um plano</a></div>}
+        {user.role === "owner" && user.subscriptionStatus === "trial" && <div className="trial-banner">Teste grátis: <b>{trialDaysLeft(user.trialEndsAt)} dia(s) restantes</b>. <Link to="/planos">Escolher um plano</Link></div>}
         {section === "users" && user.role === "master" ? <AdminUsers /> : section === "dashboard" ? <section className="saas-dashboard">
           <div className="saas-page-heading"><div><span className="admin-eyebrow">{user.role === "master" ? "ADMIN MASTER" : "GESTÃO DA LOJA"}</span><h1>Dashboard <span className="saas-heading-dot">·</span></h1><p>Visão geral · últimos 7 dias</p></div><div className="saas-range-pill"><Clock3 size={16}/> Últimos 7 dias</div></div>
           <div className="saas-metrics">
@@ -167,10 +167,10 @@ function Admin() {
               <div className="saas-priority-stats"><div><Clock3 size={15}/><span>EM ABERTO</span><b>{activeKitchenOrders.length}</b></div><div><Package size={15}/><span>ESTOQUE BAIXO</span><b>{lowStockProducts.length}</b></div></div>
               {activeKitchenOrders.slice(0, 3).map(order => <div className="saas-priority-order" key={order.id}><span className="saas-priority-dot"/><b>Pedido #{order.id}</b><small>{order.customer_name} · {order.status === "new" ? "Novo" : "Em preparo"}</small></div>)}
               {!activeKitchenOrders.length && !lowStockProducts.length && <p className="saas-all-clear">Tudo em dia por aqui.</p>}
-              <div className="saas-panel-actions"><a href="/cozinha">Abrir cozinha <ArrowRight size={15}/></a>{lowStockProducts.length > 0 && <button onClick={() => { setSection("products"); setTab("products"); }}>Revisar estoque <ArrowRight size={15}/></button>}</div>
+              <div className="saas-panel-actions"><Link to="/cozinha">Abrir cozinha <ArrowRight size={15}/></Link>{lowStockProducts.length > 0 && <button onClick={() => { setSection("products"); setTab("products"); }}>Revisar estoque <ArrowRight size={15}/></button>}</div>
             </section>
           </div>
-          <section className="saas-panel saas-recent-panel"><div className="saas-panel-heading"><div><h2>Pedidos recentes</h2><p>Últimos pedidos recebidos pela loja</p></div><a href="/cozinha">Ver todos <ArrowRight size={15}/></a></div>
+          <section className="saas-panel saas-recent-panel"><div className="saas-panel-heading"><div><h2>Pedidos recentes</h2><p>Últimos pedidos recebidos pela loja</p></div><Link to="/cozinha">Ver todos <ArrowRight size={15}/></Link></div>
             {orders.slice(0, 5).length ? orders.slice(0, 5).map(order => <article className="saas-order-row" key={order.id}><span className={`saas-order-status status-${order.status}`}/><b>#{order.id}</b><span>{order.customer_name}</span><small>{new Date(order.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</small><strong>{currency(Number(order.total || 0))}</strong></article>) : <p className="saas-chart-empty">Os pedidos da loja aparecerão nesta lista.</p>}
           </section>
         </section> : <>

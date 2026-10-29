@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { ChefHat, Clock3, LogOut, Printer, RefreshCw } from "lucide-react";
 import { configured, currentUser, listOrders, signIn, signOut, updateOrderStatus, type KitchenOrder } from "@/lib/cms";
@@ -120,7 +120,7 @@ function Kitchen() {
     </form>
   </main>;
 
-  if (user.role === "owner" && !user.hasAccess) return <main className="kitchen-page kitchen-login-wrap"><section className="kitchen-login"><h1>Assinatura não ativa</h1><p>O acesso à cozinha será liberado após a confirmação do pagamento.</p><a href="/planos">Ver planos</a><button onClick={()=>{signOut();setUser(null);}}>Sair</button></section></main>;
+  if (user.role === "owner" && !user.hasAccess) return <main className="kitchen-page kitchen-login-wrap"><section className="kitchen-login"><h1>Assinatura não ativa</h1><p>O acesso à cozinha será liberado após a confirmação do pagamento.</p><Link to="/planos">Ver planos</Link><button onClick={()=>{signOut();setUser(null);}}>Sair</button></section></main>;
 
   return <main className="kitchen-page">
     <header className="kitchen-header">

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { LogOut, Minus, Plus, Printer, Search, ShoppingCart, Trash2 } from "lucide-react";
 import { configured, createCounterSale, currentUser, loadPublicContent, signIn, signOut, type Product } from "@/lib/cms";
@@ -85,10 +85,10 @@ function Counter() {
     <button className="counter-primary" disabled={busy || !configured}>{busy ? "Entrando…" : "Entrar"}</button>
   </form></main>;
 
-  if (user.role === "owner" && !user.hasAccess) return <main className="counter-page counter-login-wrap"><section className="counter-login"><h1>Assinatura não ativa</h1><p>O acesso ao caixa será liberado após a confirmação do pagamento.</p><a href="/planos">Ver planos</a><button onClick={()=>{signOut();setUser(null);}}>Sair</button></section></main>;
+  if (user.role === "owner" && !user.hasAccess) return <main className="counter-page counter-login-wrap"><section className="counter-login"><h1>Assinatura não ativa</h1><p>O acesso ao caixa será liberado após a confirmação do pagamento.</p><Link to="/planos">Ver planos</Link><button onClick={()=>{signOut();setUser(null);}}>Sair</button></section></main>;
 
   return <main className="counter-page">
-    <header className="counter-header"><div className="counter-identity"><img src={logoImg} alt="" className="brand-logo" /><div><span className="counter-kicker">FRANGO SHOW · CAIXA</span><h1>Venda no balcão</h1><p>Registre a venda e atualize o estoque automaticamente.</p></div></div><a href="/admin">Painel administrativo</a><button onClick={() => { signOut(); setUser(null); }}><LogOut size={17}/> Sair</button></header>
+    <header className="counter-header"><div className="counter-identity"><img src={logoImg} alt="" className="brand-logo" /><div><span className="counter-kicker">FRANGO SHOW · CAIXA</span><h1>Venda no balcão</h1><p>Registre a venda e atualize o estoque automaticamente.</p></div></div><Link to="/admin">Painel administrativo</Link><button onClick={() => { signOut(); setUser(null); }}><LogOut size={17}/> Sair</button></header>
     {error && <p className="counter-error counter-alert" role="alert">{error}</p>}
     {receipt && <section className="counter-confirmation"><div><b>Venda #{receipt.id} registrada</b><span>{money(receipt.total)} · {receipt.payment_method}</span></div><button className="counter-secondary" onClick={printReceipt}><Printer size={17}/> Imprimir comprovante</button></section>}
     <div className="counter-layout">
