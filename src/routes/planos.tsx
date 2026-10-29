@@ -3,7 +3,13 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Check, Store } from "lucide-react";
 import { configured, listActivePlans, signUpForPlan, type SaaSPlan } from "@/lib/cms";
 
-export const Route = createFileRoute("/planos")({ component: Plans });
+export const Route = createFileRoute("/planos")({ component: Plans, head: () => ({ meta: [
+  { title: "Planos para sua loja | Frango Show Rotisserie" },
+  { name: "description", content: "Planos de assinatura para gerenciar sua loja na plataforma Frango Show Rotisserie." },
+  { property: "og:title", content: "Planos para sua loja | Frango Show Rotisserie" },
+  { property: "og:description", content: "Planos de assinatura para gerenciar sua loja na plataforma Frango Show Rotisserie." },
+  { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+] }) });
 const intervalLabel: Record<string, string> = { weekly:"semana", monthly:"mês", bimonthly:"2 meses", quarterly:"3 meses", semiannual:"6 meses", annual:"ano" };
 const money = (value:number) => Number(value).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 

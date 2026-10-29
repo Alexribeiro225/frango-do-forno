@@ -4,7 +4,13 @@ import { ChefHat, LogOut } from "lucide-react";
 import { configured, currentUser, signIn, signOut } from "@/lib/cms";
 import { KitchenBoard } from "@/components/KitchenBoard";
 
-export const Route = createFileRoute("/cozinha")({ component: Kitchen });
+export const Route = createFileRoute("/cozinha")({ component: Kitchen, head: () => ({ meta: [
+  { title: "Pedidos e cozinha | Frango Show Rotisserie" },
+  { name: "description", content: "Acompanhamento dos pedidos e preparo na cozinha da Frango Show Rotisserie." },
+  { property: "og:title", content: "Pedidos e cozinha | Frango Show Rotisserie" },
+  { property: "og:description", content: "Acompanhamento dos pedidos e preparo na cozinha da Frango Show Rotisserie." },
+  { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+] }) });
 const logoImg = "/images/frango-show-logo.webp";
 
 function Kitchen() {
