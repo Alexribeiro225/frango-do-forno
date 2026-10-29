@@ -1,6 +1,27 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertDeletableUser } from "@/lib/user-deletion";
 
 const MASTER = "conectstore.app@gmail.com";
+
+export const adminDeleteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string }) => {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.userId)) throw new Error("Usuário inválido.");
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    const { data: verified, error: authError } = await context.supabase.auth.getUser();
+    const { data: master, error: roleError } = await context.supabase.rpc("is_superadmin");
+    if (authError || !verified.user || roleError || !master) throw new Error("Acesso negado.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: target, error: targetError } = await supabaseAdmin.auth.admin.getUserById(data.userId);
+    if (targetError || !target.user) throw new Error("Usuário não encontrado.");
+    assertDeletableUser(context.userId, target.user);
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (error) throw new Error("Não foi possível excluir o usuário. Tente novamente.");
+    return { ok: true };
+  });
 
 async function requireMaster(token: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
