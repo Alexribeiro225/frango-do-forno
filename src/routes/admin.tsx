@@ -6,8 +6,6 @@ import { KitchenBoard } from "@/components/KitchenBoard";
 import { CounterBoard } from "@/components/CounterBoard";
 import { configured, currentUser, isEmailRegistered, isImpersonating, returnToMaster, signUpTrial, trialDaysLeft, deleteRow, getMySubscription, listComboComponents, listOrders, listRows, saveComboComponents, saveRow, signIn, signOut, uploadImage } from "@/lib/cms";
 import { PeriodPicker } from "@/components/PeriodPicker";
-import { Button } from "@/components/ui/button";
-import { storeSearch } from "@/lib/storefront";
 import { defaultPeriod, periodLabel, periodRange } from "@/lib/period";
 import type { Announcement, KitchenOrder, Product, Promo } from "@/lib/cms";
 
@@ -52,10 +50,10 @@ function Admin() {
   const [notice, setNotice] = useState("");
   const [comboComponents, setComboComponents] = useState<Array<{ product_id: number; quantity: number }>>([]);
   useEffect(() => { currentUser().then(setUser); }, []);
-  useEffect(() => { if (user?.role === "owner" && user.hasAccess) refresh(); }, [user, tab]);
+  useEffect(() => { if (user?.role === "master" || user?.hasAccess) refresh(); }, [user, tab]);
   useEffect(() => { if (user?.role === "owner" && user.subscriptionStatus !== "active") getMySubscription().then(value => setSubscriptionCheckout(value.checkout_url)).catch(() => {}); }, [user]);
   useEffect(() => {
-    if (!user || user.role === "master" || !user.hasAccess) return;
+    if (!user || (user.role === "owner" && !user.hasAccess)) return;
     let cancelled = false;
     const load = () => Promise.all([listOrders(periodRange(period)), listRows("products")]).then(([nextOrders, nextProducts]) => {
       if (cancelled) return;
@@ -128,7 +126,7 @@ function Admin() {
   }
   if (!configured) return <main className="admin-page"><section className="admin-login"><span className="admin-eyebrow">FRANGO SHOW · ADMINISTRAÇÃO</span><h1>Configure o painel</h1><p>O painel foi criado. Para guardar produtos, imagens e promoções com segurança, primeiro conecte um projeto Supabase seguindo o guia incluído no repositório.</p><a className="admin-primary" href="https://github.com/Alexribeiro225/frango-do-forno/blob/main/ADMIN_SETUP.md">Ver instruções de configuração</a></section></main>;
   if (!user && mode === "signup") return <main className="admin-page"><form className="admin-login" onSubmit={register}><span className="admin-eyebrow">FRANGO SHOW · NOVA CONTA</span><h1>Teste grátis por 15 dias</h1><p>Não encontramos uma conta com este e-mail. Crie a sua agora: <b>15 dias grátis, sem precisar de cartão</b>.</p><label>E-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label><label>Crie uma senha<input type="password" minLength={8} value={password} onChange={e => setPassword(e.target.value)} required /></label><label>Repita a senha<input type="password" minLength={8} value={password2} onChange={e => setPassword2(e.target.value)} required /></label>{error && <div className="admin-error">{error}</div>}<button className="admin-primary" disabled={busy}>{busy ? "Criando..." : "Começar teste grátis"}</button><button type="button" className="admin-logout" onClick={() => { setMode("login"); setError(""); }}>Já tenho conta</button></form></main>;
-  if (!user) return <main className="admin-page"><form className="admin-login" onSubmit={login}><span className="admin-eyebrow">FRANGO SHOW · GESTÃO</span><h1>Entrar no painel</h1><p>Acesse com o login da loja ou do admin master. E-mail novo? Você poderá criar uma conta com 15 dias grátis.</p><label>E-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label><label>Senha<input type="password" value={password} onChange={e => setPassword(e.target.value)} /></label>{notice && <div className="admin-notice">{notice}</div>}{error && <div className="admin-error">{error}</div>}<button className="admin-primary" disabled={busy}>{busy ? "Entrando..." : "Entrar"}</button><Button type="button" variant="link" onClick={()=>{setMode("signup");setError("");setNotice("");}}>Criar conta com 15 dias grátis</Button></form></main>;
+  if (!user) return <main className="admin-page"><form className="admin-login" onSubmit={login}><span className="admin-eyebrow">FRANGO SHOW · GESTÃO</span><h1>Entrar no painel</h1><p>Acesse com o login da loja ou do admin master. E-mail novo? Você poderá criar uma conta com 15 dias grátis.</p><label>E-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label><label>Senha<input type="password" value={password} onChange={e => setPassword(e.target.value)} /></label>{notice && <div className="admin-notice">{notice}</div>}{error && <div className="admin-error">{error}</div>}<button className="admin-primary" disabled={busy}>{busy ? "Entrando..." : "Entrar"}</button></form></main>;
   if (user.role === "owner" && !user.hasAccess) return <main className="admin-page"><section className="admin-login"><span className="admin-eyebrow">FRANGO SHOW · ASSINATURA</span><h1>{user.isBlocked ? "Acesso bloqueado" : user.subscriptionStatus === "trial" ? "Seu teste grátis terminou" : "Ative o acesso à loja"}</h1><p>{user.isBlocked ? "O acesso desta conta foi bloqueado. Fale com o suporte." : "Escolha um plano para continuar usando o painel. Vamos te levar para a área de planos em instantes."}</p>{subscriptionCheckout && <a className="admin-primary" href={subscriptionCheckout}>Continuar pagamento</a>}<Link className="admin-logout" to="/planos">Ver planos</Link>{impersonating && <button className="admin-logout" onClick={()=>{returnToMaster();window.location.reload();}}>Voltar ao admin master</button>}<button className="admin-logout" onClick={()=>{signOut();setUser(null);}}>Sair</button></section></main>;
   const imageField = <label className="admin-image-field">Imagem<input type="file" accept="image/*" onChange={e => image(e.currentTarget.files?.[0])} /><span><ImagePlus size={18}/> Enviar imagem</span>{typeof form["image_url"] === "string" && form["image_url"] && <img src={form["image_url"]} alt="Prévia" />}</label>;
   const componentProducts = rows.filter((row): row is Product => "category" in row && row.category !== "Combos");
@@ -156,8 +154,8 @@ function Admin() {
   }
   return <main className="admin-page saas-admin-page">
     <aside className="saas-sidebar">
-      <Link className="saas-brand" to="/" search={storeSearch(user)} aria-label="Frango Show, abrir loja"><img src="/images/frango-show-logo.webp" alt="" className="saas-brand-logo" /><span><b>FRANGO SHOW</b><small>ROTISSERIE · PAINEL</small></span></Link>
-      {user.role === "owner" && <><div className="saas-nav-group"><span>OPERAÇÃO</span>
+      <Link className="saas-brand" to="/" aria-label="Frango Show, abrir loja"><img src="/images/frango-show-logo.webp" alt="" className="saas-brand-logo" /><span><b>FRANGO SHOW</b><small>ROTISSERIE · PAINEL</small></span></Link>
+      <div className="saas-nav-group"><span>OPERAÇÃO</span>
         <button className={section === "dashboard" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => setSection("dashboard")}><LayoutDashboard size={19}/> Visão geral</button>
         <button className={section === "kitchen" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => setSection("kitchen")}><ChefHat size={19}/> Pedidos e cozinha</button>
         <button className={section === "counter" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => setSection("counter")}><Store size={19}/> Venda no balcão</button>
@@ -167,12 +165,11 @@ function Admin() {
         <button className={section === "promotions" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => { setSection("promotions"); setTab("promotions"); setEditing(null); setForm(blank("promotions")); setComboComponents([]); }}><Megaphone size={19}/> Promoções</button>
         <button className={section === "announcements" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => { setSection("announcements"); setTab("announcements"); setEditing(null); setForm(blank("announcements")); setComboComponents([]); }}><ShoppingBag size={19}/> Avisos da loja</button>
         <a className="saas-nav-item" href="#sales-chart" onClick={() => setSection("dashboard")}><BarChart3 size={19}/> Relatórios</a>
-      </div></>}
+      </div>
       <div className="saas-sidebar-bottom">
-        {user.role === "owner" && <Link className="saas-nav-item" to="/" search={storeSearch(user)}><Store size={19}/> Abrir minha loja</Link>}
         {user.role === "master" && <button className={section === "users" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => setSection("users")}><Users size={19}/> Usuários</button>}
         {user.role === "master" && <Link className="saas-nav-item" to="/admin/planos"><CreditCard size={19}/> Planos SaaS</Link>}
-        <span className="saas-store-chip"><span/> {user.role === "master" ? "Gestão do sistema" : "Loja conectada"}</span>
+        <span className="saas-store-chip"><span/> Loja conectada</span>
         <small>{user.email || (user.role === "master" ? "Admin master" : "Conta da loja")}</small>
       </div>
     </aside>
@@ -182,14 +179,14 @@ function Admin() {
         {error && <div className="admin-error" role="alert">{error}</div>}{notice && <div className="admin-notice" role="status">{notice}</div>}
         {impersonating && <div className="trial-banner">Você está vendo o sistema como {user.email}. <button onClick={() => { returnToMaster(); window.location.reload(); }}>Voltar ao admin master</button></div>}
         {user.role === "owner" && user.subscriptionStatus === "trial" && <div className="trial-banner">Teste grátis: <b>{trialDaysLeft(user.trialEndsAt)} dia(s) restantes</b>. <Link to="/planos">Escolher um plano</Link></div>}
-        {user.role === "master" ? <AdminUsers /> : section === "counter" ? <section className="saas-kitchen-section">
-          <header className="saas-page-heading saas-management-heading"><div><span className="admin-eyebrow">GESTÃO DA LOJA</span><h1>Venda no balcão</h1><p>Registre a venda e atualize o estoque automaticamente.</p></div></header>
+        {section === "users" && user.role === "master" ? <AdminUsers /> : section === "counter" ? <section className="saas-kitchen-section">
+          <header className="saas-page-heading saas-management-heading"><div><span className="admin-eyebrow">{user.role === "master" ? "ADMIN MASTER" : "GESTÃO DA LOJA"}</span><h1>Venda no balcão</h1><p>Registre a venda e atualize o estoque automaticamente.</p></div></header>
           <CounterBoard />
         </section> : section === "kitchen" ? <section className="saas-kitchen-section">
-          <header className="saas-page-heading saas-management-heading"><div><span className="admin-eyebrow">GESTÃO DA LOJA</span><h1>Pedidos e cozinha</h1><p>Pedidos recebidos pelo site · Atualiza a cada 10 segundos</p></div></header>
+          <header className="saas-page-heading saas-management-heading"><div><span className="admin-eyebrow">{user.role === "master" ? "ADMIN MASTER" : "GESTÃO DA LOJA"}</span><h1>Pedidos e cozinha</h1><p>Pedidos recebidos pelo site · Atualiza a cada 10 segundos</p></div></header>
           <KitchenBoard />
         </section> : section === "dashboard" ? <section className="saas-dashboard">
-          <div className="saas-page-heading"><div><span className="admin-eyebrow">GESTÃO DA LOJA</span><h1>Dashboard <span className="saas-heading-dot">·</span></h1><p>Visão geral · {periodLabel(period)}</p></div><PeriodPicker value={period} onChange={setPeriod} /></div>
+          <div className="saas-page-heading"><div><span className="admin-eyebrow">{user.role === "master" ? "ADMIN MASTER" : "GESTÃO DA LOJA"}</span><h1>Dashboard <span className="saas-heading-dot">·</span></h1><p>Visão geral · {periodLabel(period)}</p></div><PeriodPicker value={period} onChange={setPeriod} /></div>
           <div className="saas-metrics">
             <article className="saas-metric saas-metric-highlight"><div><span className="saas-metric-icon"><ShoppingBag size={19}/></span><span>Pedidos recebidos</span></div><strong>{recentOrders.length}</strong><small><ArrowRight size={14}/> {orders.filter(order => order.status === "new").length} novos no período</small></article>
             <article className="saas-metric"><div><span className="saas-metric-icon blue"><CircleDollarSign size={19}/></span><span>Vendas no período</span></div><strong>{currency(salesTotal)}</strong><small><BarChart3 size={14}/> {recentOrders.length} pedidos não cancelados</small></article>
@@ -213,7 +210,7 @@ function Admin() {
             {orders.slice(0, 5).length ? orders.slice(0, 5).map(order => <article className="saas-order-row" key={order.id}><span className={`saas-order-status status-${order.status}`}/><b>#{order.id}</b><span>{order.customer_name}</span><small>{new Date(order.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</small><strong>{currency(Number(order.total || 0))}</strong></article>) : <p className="saas-chart-empty">Os pedidos da loja aparecerão nesta lista.</p>}
           </section>
         </section> : <>
-          <header className="saas-page-heading saas-management-heading"><div><span className="admin-eyebrow">GESTÃO DA LOJA</span><h1>{tabs.find(t => t.id === tab)?.label}</h1><p>Gerencie os dados que aparecem na loja.</p></div><button className="saas-primary-action" onClick={fresh}><Plus size={17}/> Novo item</button></header>
+          <header className="saas-page-heading saas-management-heading"><div><span className="admin-eyebrow">{user.role === "master" ? "ADMIN MASTER" : "GESTÃO DA LOJA"}</span><h1>{tabs.find(t => t.id === tab)?.label}</h1><p>Gerencie os dados que aparecem na loja.</p></div><button className="saas-primary-action" onClick={fresh}><Plus size={17}/> Novo item</button></header>
           <nav className="admin-tabs">{tabs.map(t => <button key={t.id} className={tab === t.id ? "active" : ""} onClick={() => { setSection(t.id); setTab(t.id); setEditing(null); setForm(blank(t.id)); setComboComponents([]); }}>{t.label}</button>)}</nav>
           <section className="admin-card" id="admin-form"><div className="admin-card-head"><h2>{editing ? "Editar" : "Adicionar"} {tabs.find(t => t.id === tab)?.label.toLowerCase()}</h2>{editing && <button onClick={fresh}>Cancelar</button>}</div>
       <form className="admin-form" onSubmit={submit}>

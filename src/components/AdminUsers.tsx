@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
-import { KeyRound, Lock, LogIn, RefreshCw, Unlock, CalendarClock, Trash2, Store } from "lucide-react";
-import { useServerFn } from "@tanstack/react-start";
-import { Button } from "@/components/ui/button";
-import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
-import { accessToken, enterAsUser, listManagedUsers, setMainStore, trialDaysLeft, updateManagedUser, type ManagedUser } from "@/lib/cms";
-import { adminDeleteUser, adminImpersonate, adminSetPassword } from "@/lib/users.functions";
+import { KeyRound, Lock, LogIn, RefreshCw, Unlock, CalendarClock } from "lucide-react";
+import { accessToken, enterAsUser, listManagedUsers, trialDaysLeft, updateManagedUser, type ManagedUser } from "@/lib/cms";
+import { adminImpersonate, adminSetPassword } from "@/lib/users.functions";
 
 const statusLabel: Record<string, string> = { trial: "Teste grátis", active: "Assinante", pending: "Pendente", past_due: "Pagamento atrasado", canceled: "Cancelado", refunded: "Reembolsado", chargeback: "Contestado" };
 
@@ -13,16 +10,6 @@ export function AdminUsers() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState<ManagedUser | null>(null);
-  const deleteUser = useServerFn(adminDeleteUser);
-  async function confirmDelete() {
-    if (!deleting) return;
-    const target = deleting;
-    await run(target.user_id, async () => {
-      await deleteUser({ data: { userId: target.user_id } });
-      setDeleting(null);
-    }, "Usuário excluído. O acesso foi removido.");
-  }
   const msg = (e: unknown) => (e instanceof Error ? e.message : "Ocorreu um erro.");
   async function load() { try { setUsers(await listManagedUsers()); } catch (e) { setError(msg(e)); } }
   useEffect(() => { load(); }, []);
@@ -62,24 +49,14 @@ export function AdminUsers() {
     {error && <div className="admin-error" role="alert">{error}</div>}{notice && <div className="admin-notice" role="status">{notice}</div>}
     <section className="saas-panel">
       {users.length ? users.map(u => <article className="admin-user-row" key={u.user_id}>
-        <div><b>{u.customer_email}</b><small>{u.is_blocked ? "Bloqueado" : statusLabel[u.status] || u.status}{u.status === "trial" && !u.is_blocked ? ` · ${trialDaysLeft(u.trial_ends_at)} dia(s) restantes` : ""}{u.is_main_store ? " · Loja do site principal" : ""}</small></div>
+        <div><b>{u.customer_email}</b><small>{u.is_blocked ? "Bloqueado" : statusLabel[u.status] || u.status}{u.status === "trial" && !u.is_blocked ? ` · ${trialDaysLeft(u.trial_ends_at)} dia(s) restantes` : ""}</small></div>
         <div className="admin-user-actions">
-          <Button variant="outline" size="sm" disabled={busy !== null || u.is_main_store} onClick={() => { if (window.confirm(`Direcionar o site principal para a loja de ${u.customer_email}?`)) void run(u.user_id, () => setMainStore(u.user_id), "Site principal vinculado à loja selecionada."); }}><Store size={15}/>{u.is_main_store ? "Site vinculado" : "Vincular site principal"}</Button>
           <button disabled={busy === u.user_id} onClick={() => changeTrial(u)}><CalendarClock size={15}/> Período de teste</button>
           <button disabled={busy === u.user_id} onClick={() => changePassword(u)}><KeyRound size={15}/> Senha</button>
           <button disabled={busy === u.user_id} onClick={() => enter(u)}><LogIn size={15}/> Entrar</button>
           <button disabled={busy === u.user_id} className={u.is_blocked ? "" : "danger"} onClick={() => toggleBlock(u)}>{u.is_blocked ? <><Unlock size={15}/> Desbloquear</> : <><Lock size={15}/> Bloquear</>}</button>
-          <Button variant="destructive" size="sm" disabled={busy !== null} onClick={() => { setError(""); setDeleting(u); }}><Trash2 size={15}/> Excluir usuário</Button>
         </div>
       </article>) : <p className="saas-chart-empty">Nenhum usuário cadastrado ainda.</p>}
     </section>
-    <AlertDialog open={deleting !== null} onOpenChange={open => { if (!open && !busy) setDeleting(null); }}>
-      <AlertDialogContent className="max-w-lg w-[calc(100%-2rem)]">
-        <AlertDialogTitle>Excluir usuário?</AlertDialogTitle>
-        <AlertDialogDescription>Excluir a conta {deleting?.customer_email} e remover seu acesso permanentemente? Esta ação não pode ser desfeita. Os registros da loja serão preservados.</AlertDialogDescription>
-        {error && <p className="text-destructive" role="alert">{error}</p>}
-        <AlertDialogFooter><AlertDialogCancel disabled={busy !== null}>Cancelar</AlertDialogCancel><Button variant="destructive" disabled={busy !== null} onClick={() => void confirmDelete()}><Trash2/>{busy ? "Excluindo…" : "Excluir permanentemente"}</Button></AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
   </section>;
 }

@@ -81,12 +81,9 @@ export async function signUpTrial(email: string, password: string) {
   return { confirmationRequired: !data.access_token };
 }
 export async function accessToken() { return token(); }
-export type ManagedUser = { user_id: string; customer_email: string; status: string; trial_ends_at: string | null; is_blocked: boolean; created_at: string; is_main_store: boolean };
-export async function setMainStore(userId: string) {
-  return rest("rpc/set_main_store", "", { method: "POST", body: JSON.stringify({ p_user_id: userId }) });
-}
+export type ManagedUser = { user_id: string; customer_email: string; status: string; trial_ends_at: string | null; is_blocked: boolean; created_at: string };
 export async function listManagedUsers() {
-  return rest("saas_subscriptions", "?select=user_id,customer_email,status,trial_ends_at,is_blocked,created_at,is_main_store&order=created_at.desc") as Promise<ManagedUser[]>;
+  return rest("saas_subscriptions", "?select=user_id,customer_email,status,trial_ends_at,is_blocked,created_at&order=created_at.desc") as Promise<ManagedUser[]>;
 }
 export async function updateManagedUser(userId: string, patch: Partial<Pick<ManagedUser, "status" | "trial_ends_at" | "is_blocked">>) {
   return rest("saas_subscriptions", "?user_id=eq." + encodeURIComponent(userId), { method: "PATCH", body: JSON.stringify(patch) });
@@ -117,16 +114,19 @@ async function rest(table: string, query = "", init: RequestInit = {}) {
   const access = await token();
   return authFetch(`/rest/v1/${table}${query}`, { ...init, headers: { Prefer: "return=representation", ...init.headers } }, access);
 }
-export async function loadPublicContent(storeId?: string) {
+export async function loadPublicContent() {
   if (!configured) return null;
   try {
-    const { products, promos, announcements, components, store_id } = await authFetch("/rest/v1/rpc/public_store_content", {
-      method: "POST", body: JSON.stringify({ p_store_id: storeId ?? null }),
-    });
+    const [products, promos, announcements, components] = await Promise.all([
+      authFetch("/rest/v1/products?select=id,category,name,price,description,image_url,is_popular,is_active,stock_quantity&is_active=eq.true&order=sort_order.asc"),
+      authFetch("/rest/v1/promotions?select=id,title,description,image_url,starts_at,ends_at,is_active&is_active=eq.true"),
+      authFetch("/rest/v1/announcements?select=id,title,body,image_url,is_active&is_active=eq.true"),
+      authFetch("/rest/v1/combo_components?select=combo_product_id,component_product_id,quantity_per_combo"),
+    ]);
     const productRows = products as Product[];
     const componentRows = components as ComboComponent[];
     const productsWithAvailability = withComboAvailability(productRows, componentRows);
-    return { storeId: store_id as string, products: productsWithAvailability, promos: promos as Promo[], announcements: announcements as Announcement[] };
+    return { products: productsWithAvailability, promos: promos as Promo[], announcements: announcements as Announcement[] };
   } catch { return null; }
 }
 export async function listRows(table: "products" | "promotions" | "announcements") {
@@ -180,9 +180,8 @@ export async function createOrder(input: {
   customer_name: string; customer_phone: string; fulfillment: "delivery" | "pickup";
   address: Record<string, string>; payment_method: string; notes: string;
   items: Array<{ product_id: number; quantity: number }>;
-}, storeId?: string) {
-  return authFetch("/rest/v1/rpc/create_store_order", { method: "POST", body: JSON.stringify({
-    p_store_id: storeId ?? null,
+}) {
+  return authFetch("/rest/v1/rpc/create_order", { method: "POST", body: JSON.stringify({
     p_customer_name: input.customer_name, p_customer_phone: input.customer_phone,
     p_fulfillment: input.fulfillment, p_address: input.address,
     p_payment_method: input.payment_method, p_notes: input.notes, p_items: input.items,
