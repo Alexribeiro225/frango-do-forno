@@ -1,6 +1,6 @@
 # Tasks
-- [ ] Route main-site orders to the registered store and prevent master fulfillment.
-- [ ] Separate master management from store operations and verify routing end to end.
+- [x] Route main-site orders to the registered store and prevent master fulfillment.
+- [x] Separate master management from store operations; main-site checkout reached the user's kitchen, master has no fulfillment view, fixtures removed.
 - [x] Connect each account's public storefront and order destination without sharing other stores' data.
 - [x] Verify public checkout and receipt in the registered account's kitchen; signed-in ownership and cross-store rejection passed, temporary fixtures removed.
 - [x] Isolate each customer's operational data so new accounts start empty without changing existing store records.
