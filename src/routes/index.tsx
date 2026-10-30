@@ -93,13 +93,14 @@ function openStatus() {
 
 function Index() {
   const { loja: storeId } = Route.useSearch();
+  const [resolvedStoreId, setResolvedStoreId] = useState<string | undefined>(storeId);
   const [catalog, setCatalog] = useState<Item[]>([]);
   const [catalogError, setCatalogError] = useState("");
   const [orderSaved, setOrderSaved] = useState<number | null>(null);
   const [cmsPromos, setCmsPromos] = useState<Array<{id:number;title:string;description:string;image_url:string|null}>>([]);
   const [cmsAnnouncements, setCmsAnnouncements] = useState<Array<{id:number;title:string;body:string;image_url:string|null}>>([]);
   useEffect(() => {
-    setCatalog([]); setCart({}); setQuantities({}); setOrderSaved(null);
+    setResolvedStoreId(storeId); setCatalog([]); setCart({}); setQuantities({}); setOrderSaved(null);
     setCmsPromos([]); setCmsAnnouncements([]);
     let cancelled = false;
     const refresh = async () => {
@@ -107,6 +108,7 @@ function Index() {
       if (cancelled) return;
       if (!content) { setCatalog([]); setCatalogError("Não foi possível carregar esta loja. Tente novamente em instantes."); return; }
       setCatalogError("");
+      setResolvedStoreId(content.storeId);
       setCatalog(content.products.map((p: CmsProduct) => ({id:p.id,cat:p.category,name:p.name,price:Number(p.price),desc:p.description,img:p.image_url,popular:p.is_popular,stock_quantity:p.stock_quantity})));
       setCmsPromos(content.promos);
       setCmsAnnouncements(content.announcements);
@@ -165,39 +167,14 @@ function Index() {
       cep: String(form.get("cep") ?? "").trim(), neighborhood: String(form.get("neighborhood") ?? "").trim(),
       complement: String(form.get("complement") ?? "").trim(), reference: String(form.get("reference") ?? "").trim(),
     } : {};
-    const popup = storeId ? null : window.open("about:blank", "_blank");
     setOrderBusy(true);
     try {
       const saved = await createOrder({
         customer_name: name, customer_phone: phone, fulfillment, address, payment_method: payment, notes,
         items: lines.map(item => ({ product_id: item.id, quantity: cart[item.id] ?? 0 })),
-      }, storeId);
-      if (storeId) {
-        setOrderSaved(saved.order_number); setCart({}); setCartOpen(false); setCheckout(false);
-        return;
-      }
-      const deliveryDetails = fulfillment === "delivery" ? [
-        "Endereço: " + address.street + ", nº " + address.number,
-        address.cep ? "CEP: " + address.cep : "",
-        address.neighborhood ? "Bairro: " + address.neighborhood : "",
-        address.complement ? "Complemento: " + address.complement : "",
-        address.reference ? "Ponto de referência: " + address.reference : "",
-      ].filter(Boolean) : [];
-      const orderLines = saved.items.map(item => item.quantity + "x " + item.name + " — " + brl(Number(item.line_total)));
-      const message = [
-        "Olá! Pedido #" + saved.order_number, "",
-        "Modalidade: " + (fulfillment === "delivery" ? "Delivery" : "Retirada"),
-        "Nome: " + name, "Telefone: " + phone, ...deliveryDetails, "Forma de pagamento: " + payment,
-        notes ? "Observação: " + notes : "", "", "Itens do pedido:", ...orderLines, "",
-        "Subtotal: " + brl(Number(saved.subtotal)),
-        "Taxa de entrega: " + (saved.delivery_fee === null ? "A combinar" : brl(Number(saved.delivery_fee))),
-        "Total: " + brl(Number(saved.total)) + (saved.delivery_fee === null ? " + taxa de entrega a combinar" : ""),
-      ].filter(line => line !== "").join("\n");
-      const link = waLink(message);
-      if (popup) { popup.location.href = link; setCart({}); setCartOpen(false); setCheckout(false); }
-      else { setWhatsappFallback(link); }
+      }, resolvedStoreId);
+      setOrderSaved(saved.order_number); setCart({}); setCartOpen(false); setCheckout(false);
     } catch (e) {
-      popup?.close();
       setOrderError(e instanceof Error ? e.message : "Não foi possível salvar o pedido. Tente novamente.");
     } finally { setOrderBusy(false); }
   };
@@ -439,7 +416,7 @@ function Index() {
                   <p><span>Taxa de entrega</span><b>{fulfillment === "delivery" ? "A combinar" : "R$ 0,00"}</b></p>
                   <p className="checkout-grand-total"><strong>Total</strong><strong>{brl(total)}</strong></p>
                 </div>
-                {orderError && <p className="checkout-error" role="alert">{orderError}</p>}{whatsappFallback && <div className="checkout-success" role="status"><b>Pedido registrado!</b><a href={whatsappFallback} target="_blank" rel="noreferrer">Continuar para o WhatsApp</a></div>}<Button className="button checkout-whatsapp" type="submit" disabled={orderBusy || Boolean(whatsappFallback)}>{orderBusy ? "Registrando pedido..." : whatsappFallback ? "Pedido registrado" : storeId ? "Finalizar pedido" : "Finalizar pelo WhatsApp"}</Button>
+                {orderError && <p className="checkout-error" role="alert">{orderError}</p>}{whatsappFallback && <div className="checkout-success" role="status"><b>Pedido registrado!</b><a href={whatsappFallback} target="_blank" rel="noreferrer">Continuar para o WhatsApp</a></div>}<Button className="button checkout-whatsapp" type="submit" disabled={orderBusy || Boolean(whatsappFallback)}>{orderBusy ? "Registrando pedido..." : whatsappFallback ? "Pedido registrado" : "Finalizar pedido"}</Button>
               </div>
             </form>
           ) : (
