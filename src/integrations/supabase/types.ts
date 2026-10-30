@@ -287,6 +287,7 @@ export type Database = {
           current_period_end: string | null
           customer_email: string
           is_blocked: boolean
+          is_main_store: boolean
           plan_id: number | null
           provider: string
           provider_subscription_id: string | null
@@ -300,6 +301,7 @@ export type Database = {
           current_period_end?: string | null
           customer_email: string
           is_blocked?: boolean
+          is_main_store?: boolean
           plan_id?: number | null
           provider?: string
           provider_subscription_id?: string | null
@@ -313,6 +315,7 @@ export type Database = {
           current_period_end?: string | null
           customer_email?: string
           is_blocked?: boolean
+          is_main_store?: boolean
           plan_id?: number | null
           provider?: string
           provider_subscription_id?: string | null
@@ -374,11 +377,13 @@ export type Database = {
       email_registered: { Args: { p_email: string }; Returns: boolean }
       has_active_saas_subscription: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
+      main_store_owner: { Args: never; Returns: string }
       public_store_content: { Args: { p_store_id?: string }; Returns: Json }
       save_combo_components: {
         Args: { p_combo_product_id: number; p_components: Json }
         Returns: undefined
       }
+      set_main_store: { Args: { p_user_id: string }; Returns: undefined }
       store_accepts_orders: { Args: { p_owner: string }; Returns: boolean }
     }
     Enums: {
