@@ -1,5 +1,5 @@
-export function storeSearch(user: { id: string; role: "master" | "owner" }) {
-  return { loja: user.role === "owner" ? user.id : undefined };
+export function storeSearch(user: { id: string; role: "master" | "owner" }): { loja?: string } {
+  return user.role === "owner" ? { loja: user.id } : {};
 }
 
 export function parseStoreSearch(search: Record<string, unknown>): { loja?: string } {
