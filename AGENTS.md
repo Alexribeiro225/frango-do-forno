@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Calculate combo availability through the shared inventory helper for both public and authenticated product reads; stored combo stock is not authoritative because availability depends on all recipe components.
+- The main storefront catalog belongs to the designated main store account; anonymous catalog policies follow main_store_owner() so tenant-scoped management and public visibility agree without granting other stores access.
