@@ -52,10 +52,10 @@ function Admin() {
   const [notice, setNotice] = useState("");
   const [comboComponents, setComboComponents] = useState<Array<{ product_id: number; quantity: number }>>([]);
   useEffect(() => { currentUser().then(setUser); }, []);
-  useEffect(() => { if (user?.role === "master" || user?.hasAccess) refresh(); }, [user, tab]);
+  useEffect(() => { if (user?.role === "owner" && user.hasAccess) refresh(); }, [user, tab]);
   useEffect(() => { if (user?.role === "owner" && user.subscriptionStatus !== "active") getMySubscription().then(value => setSubscriptionCheckout(value.checkout_url)).catch(() => {}); }, [user]);
   useEffect(() => {
-    if (!user || (user.role === "owner" && !user.hasAccess)) return;
+    if (!user || user.role === "master" || !user.hasAccess) return;
     let cancelled = false;
     const load = () => Promise.all([listOrders(periodRange(period)), listRows("products")]).then(([nextOrders, nextProducts]) => {
       if (cancelled) return;
@@ -157,7 +157,7 @@ function Admin() {
   return <main className="admin-page saas-admin-page">
     <aside className="saas-sidebar">
       <Link className="saas-brand" to="/" search={storeSearch(user)} aria-label="Frango Show, abrir loja"><img src="/images/frango-show-logo.webp" alt="" className="saas-brand-logo" /><span><b>FRANGO SHOW</b><small>ROTISSERIE · PAINEL</small></span></Link>
-      <div className="saas-nav-group"><span>OPERAÇÃO</span>
+      {user.role === "owner" && <><div className="saas-nav-group"><span>OPERAÇÃO</span>
         <button className={section === "dashboard" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => setSection("dashboard")}><LayoutDashboard size={19}/> Visão geral</button>
         <button className={section === "kitchen" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => setSection("kitchen")}><ChefHat size={19}/> Pedidos e cozinha</button>
         <button className={section === "counter" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => setSection("counter")}><Store size={19}/> Venda no balcão</button>
@@ -167,12 +167,12 @@ function Admin() {
         <button className={section === "promotions" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => { setSection("promotions"); setTab("promotions"); setEditing(null); setForm(blank("promotions")); setComboComponents([]); }}><Megaphone size={19}/> Promoções</button>
         <button className={section === "announcements" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => { setSection("announcements"); setTab("announcements"); setEditing(null); setForm(blank("announcements")); setComboComponents([]); }}><ShoppingBag size={19}/> Avisos da loja</button>
         <a className="saas-nav-item" href="#sales-chart" onClick={() => setSection("dashboard")}><BarChart3 size={19}/> Relatórios</a>
-      </div>
+      </div></>}
       <div className="saas-sidebar-bottom">
-        <Link className="saas-nav-item" to="/" search={storeSearch(user)}><Store size={19}/> Abrir minha loja</Link>
+        {user.role === "owner" && <Link className="saas-nav-item" to="/" search={storeSearch(user)}><Store size={19}/> Abrir minha loja</Link>}
         {user.role === "master" && <button className={section === "users" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => setSection("users")}><Users size={19}/> Usuários</button>}
         {user.role === "master" && <Link className="saas-nav-item" to="/admin/planos"><CreditCard size={19}/> Planos SaaS</Link>}
-        <span className="saas-store-chip"><span/> Loja conectada</span>
+        <span className="saas-store-chip"><span/> {user.role === "master" ? "Gestão do sistema" : "Loja conectada"}</span>
         <small>{user.email || (user.role === "master" ? "Admin master" : "Conta da loja")}</small>
       </div>
     </aside>
@@ -182,7 +182,7 @@ function Admin() {
         {error && <div className="admin-error" role="alert">{error}</div>}{notice && <div className="admin-notice" role="status">{notice}</div>}
         {impersonating && <div className="trial-banner">Você está vendo o sistema como {user.email}. <button onClick={() => { returnToMaster(); window.location.reload(); }}>Voltar ao admin master</button></div>}
         {user.role === "owner" && user.subscriptionStatus === "trial" && <div className="trial-banner">Teste grátis: <b>{trialDaysLeft(user.trialEndsAt)} dia(s) restantes</b>. <Link to="/planos">Escolher um plano</Link></div>}
-        {section === "users" && user.role === "master" ? <AdminUsers /> : section === "counter" ? <section className="saas-kitchen-section">
+        {user.role === "master" ? <AdminUsers /> : section === "counter" ? <section className="saas-kitchen-section">
           <header className="saas-page-heading saas-management-heading"><div><span className="admin-eyebrow">{user.role === "master" ? "ADMIN MASTER" : "GESTÃO DA LOJA"}</span><h1>Venda no balcão</h1><p>Registre a venda e atualize o estoque automaticamente.</p></div></header>
           <CounterBoard />
         </section> : section === "kitchen" ? <section className="saas-kitchen-section">

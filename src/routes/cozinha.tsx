@@ -35,7 +35,7 @@ function Kitchen() {
     <form className="kitchen-login" onSubmit={login}>
       <ChefHat size={34} />
       <h1>Cozinha</h1>
-      <p>Entre com o login da loja ou do admin master para acessar os pedidos.</p>
+      <p>Entre com o login da loja para acessar os pedidos.</p>
       {!configured && <p className="kitchen-error">O banco ainda não está configurado neste site.</p>}
       <label>E-mail<input type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="username" /></label>
       <label>Senha<input type="password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" /></label>
@@ -46,6 +46,7 @@ function Kitchen() {
 
   if (user.role === "owner" && !user.hasAccess) return <main className="kitchen-page kitchen-login-wrap"><section className="kitchen-login"><h1>Assinatura não ativa</h1><p>O acesso à cozinha será liberado após a confirmação do pagamento.</p><Link to="/planos">Ver planos</Link><button onClick={()=>{signOut();setUser(null);}}>Sair</button></section></main>;
 
+  if (user.role === "master") return <main className="kitchen-page kitchen-login-wrap"><section className="kitchen-login"><h1>Gestão do sistema</h1><Link to="/admin">Voltar ao painel master</Link></section></main>;
   return <main className="kitchen-page">
     <header className="kitchen-header">
       <div><img src={logoImg} alt="" className="brand-logo kitchen-logo" /><div><h1>Painel da cozinha</h1><p>Pedidos recebidos pelo site · Atualiza a cada 10 segundos</p></div></div>
