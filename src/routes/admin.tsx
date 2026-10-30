@@ -183,13 +183,13 @@ function Admin() {
         {impersonating && <div className="trial-banner">Você está vendo o sistema como {user.email}. <button onClick={() => { returnToMaster(); window.location.reload(); }}>Voltar ao admin master</button></div>}
         {user.role === "owner" && user.subscriptionStatus === "trial" && <div className="trial-banner">Teste grátis: <b>{trialDaysLeft(user.trialEndsAt)} dia(s) restantes</b>. <Link to="/planos">Escolher um plano</Link></div>}
         {user.role === "master" ? <AdminUsers /> : section === "counter" ? <section className="saas-kitchen-section">
-          <header className="saas-page-heading saas-management-heading"><div><span className="admin-eyebrow">{user.role === "master" ? "ADMIN MASTER" : "GESTÃO DA LOJA"}</span><h1>Venda no balcão</h1><p>Registre a venda e atualize o estoque automaticamente.</p></div></header>
+          <header className="saas-page-heading saas-management-heading"><div><span className="admin-eyebrow">GESTÃO DA LOJA</span><h1>Venda no balcão</h1><p>Registre a venda e atualize o estoque automaticamente.</p></div></header>
           <CounterBoard />
         </section> : section === "kitchen" ? <section className="saas-kitchen-section">
-          <header className="saas-page-heading saas-management-heading"><div><span className="admin-eyebrow">{user.role === "master" ? "ADMIN MASTER" : "GESTÃO DA LOJA"}</span><h1>Pedidos e cozinha</h1><p>Pedidos recebidos pelo site · Atualiza a cada 10 segundos</p></div></header>
+          <header className="saas-page-heading saas-management-heading"><div><span className="admin-eyebrow">GESTÃO DA LOJA</span><h1>Pedidos e cozinha</h1><p>Pedidos recebidos pelo site · Atualiza a cada 10 segundos</p></div></header>
           <KitchenBoard />
         </section> : section === "dashboard" ? <section className="saas-dashboard">
-          <div className="saas-page-heading"><div><span className="admin-eyebrow">{user.role === "master" ? "ADMIN MASTER" : "GESTÃO DA LOJA"}</span><h1>Dashboard <span className="saas-heading-dot">·</span></h1><p>Visão geral · {periodLabel(period)}</p></div><PeriodPicker value={period} onChange={setPeriod} /></div>
+          <div className="saas-page-heading"><div><span className="admin-eyebrow">GESTÃO DA LOJA</span><h1>Dashboard <span className="saas-heading-dot">·</span></h1><p>Visão geral · {periodLabel(period)}</p></div><PeriodPicker value={period} onChange={setPeriod} /></div>
           <div className="saas-metrics">
             <article className="saas-metric saas-metric-highlight"><div><span className="saas-metric-icon"><ShoppingBag size={19}/></span><span>Pedidos recebidos</span></div><strong>{recentOrders.length}</strong><small><ArrowRight size={14}/> {orders.filter(order => order.status === "new").length} novos no período</small></article>
             <article className="saas-metric"><div><span className="saas-metric-icon blue"><CircleDollarSign size={19}/></span><span>Vendas no período</span></div><strong>{currency(salesTotal)}</strong><small><BarChart3 size={14}/> {recentOrders.length} pedidos não cancelados</small></article>
@@ -213,7 +213,7 @@ function Admin() {
             {orders.slice(0, 5).length ? orders.slice(0, 5).map(order => <article className="saas-order-row" key={order.id}><span className={`saas-order-status status-${order.status}`}/><b>#{order.id}</b><span>{order.customer_name}</span><small>{new Date(order.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</small><strong>{currency(Number(order.total || 0))}</strong></article>) : <p className="saas-chart-empty">Os pedidos da loja aparecerão nesta lista.</p>}
           </section>
         </section> : <>
-          <header className="saas-page-heading saas-management-heading"><div><span className="admin-eyebrow">{user.role === "master" ? "ADMIN MASTER" : "GESTÃO DA LOJA"}</span><h1>{tabs.find(t => t.id === tab)?.label}</h1><p>Gerencie os dados que aparecem na loja.</p></div><button className="saas-primary-action" onClick={fresh}><Plus size={17}/> Novo item</button></header>
+          <header className="saas-page-heading saas-management-heading"><div><span className="admin-eyebrow">GESTÃO DA LOJA</span><h1>{tabs.find(t => t.id === tab)?.label}</h1><p>Gerencie os dados que aparecem na loja.</p></div><button className="saas-primary-action" onClick={fresh}><Plus size={17}/> Novo item</button></header>
           <nav className="admin-tabs">{tabs.map(t => <button key={t.id} className={tab === t.id ? "active" : ""} onClick={() => { setSection(t.id); setTab(t.id); setEditing(null); setForm(blank(t.id)); setComboComponents([]); }}>{t.label}</button>)}</nav>
           <section className="admin-card" id="admin-form"><div className="admin-card-head"><h2>{editing ? "Editar" : "Adicionar"} {tabs.find(t => t.id === tab)?.label.toLowerCase()}</h2>{editing && <button onClick={fresh}>Cancelar</button>}</div>
       <form className="admin-form" onSubmit={submit}>
