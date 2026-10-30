@@ -1,0 +1,2 @@
+ALTER POLICY "Public store products only" ON public.products USING (owner_id IS NOT DISTINCT FROM public.main_store_owner());
+ALTER POLICY "Public store recipes only" ON public.combo_components USING (EXISTS (SELECT 1 FROM public.products p WHERE p.id = combo_components.combo_product_id AND p.owner_id IS NOT DISTINCT FROM public.main_store_owner()));

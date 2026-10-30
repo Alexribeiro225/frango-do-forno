@@ -15,6 +15,13 @@
       "when": 1793296269556,
       "tag": "0001_free_trial_and_user_admin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793321964228,
+      "tag": "0002_main_store_public_catalog_visibility",
+      "breakpoints": true
     }
   ]
 }
