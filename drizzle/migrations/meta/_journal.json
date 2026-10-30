@@ -29,6 +29,13 @@
       "when": 1793318634643,
       "tag": "0003_connect_public_storefront_orders",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793319467386,
+      "tag": "0004_master_management_store_routing",
+      "breakpoints": true
     }
   ]
 }

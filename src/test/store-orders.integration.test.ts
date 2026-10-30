@@ -22,10 +22,10 @@ describe.skipIf(!enabled)("Public store order boundaries", () => {
     expect(result.status).toBe(400);
     expect(result.data.message).toBe("Produto de outra loja não permitido.");
   });
-  it("rejects a signed-in caller substituting a different store", async () => {
-    const result = await order(null, product, true);
+  it("rejects an unavailable store instead of falling back to master", async () => {
+    const result = await order("00000000-0000-0000-0000-000000000000", product, true);
     expect(result.status).toBe(400);
-    expect(result.data.message).toBe("Produto de outra loja não permitido.");
+    expect(result.data.message).toBe("Loja indisponível no momento.");
   });
   it("stores a signed-in order under the verified account", async () => {
     const result = await order(owner ?? null, product, true);
@@ -33,5 +33,13 @@ describe.skipIf(!enabled)("Public store order boundaries", () => {
     if (!url || !key || !token) throw new Error("Test session required");
     const response = await fetch(`${url}/rest/v1/orders?select=owner_id,total&id=eq.${result.data.id}`, { headers: { apikey: key, Authorization: `Bearer ${token}` } });
     expect(await response.json()).toEqual([{ owner_id: owner, total: 1 }]);
+  });
+  it("routes the main site to the registered user, not master", async () => {
+    if (!url || !key) throw new Error("Test configuration required");
+    const response = await fetch(`${url}/rest/v1/rpc/public_store_content`, { method: "POST", headers: { apikey: key, "Content-Type": "application/json" }, body: JSON.stringify({ p_store_id: null }) });
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.store_id).toBe(owner);
+    expect(data.products.some((p: { id: number }) => p.id === product)).toBe(true);
   });
 });
