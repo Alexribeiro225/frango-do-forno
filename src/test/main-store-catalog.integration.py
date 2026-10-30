@@ -3,7 +3,7 @@ import asyncio
 import json
 import time
 from pathlib import Path
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, expect
 
 
 async def main():
@@ -25,7 +25,7 @@ async def main():
         joelho = page.locator(".admin-row").filter(has_text="Combo Joelho de Porco")
         await joelho.get_by_role("button", name="Editar", exact=True).click()
         await page.get_by_label("Quantidade de Joelho de Porco por combo", exact=True).wait_for()
-        assert await page.get_by_label("Quantidade de Joelho de Porco por combo", exact=True).input_value() == "1"
+        await expect(page.get_by_label("Quantidade de Joelho de Porco por combo", exact=True)).to_have_value("1")
         public_page = await context.new_page()
         response = await public_page.goto("http://localhost:8080")
         assert response and response.ok
