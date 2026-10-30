@@ -357,14 +357,29 @@ export type Database = {
         }
         Returns: Json
       }
+      create_store_order: {
+        Args: {
+          p_address: Json
+          p_customer_name: string
+          p_customer_phone: string
+          p_fulfillment: string
+          p_items: Json
+          p_notes: string
+          p_payment_method: string
+          p_store_id: string
+        }
+        Returns: Json
+      }
       current_store_owner: { Args: never; Returns: string }
       email_registered: { Args: { p_email: string }; Returns: boolean }
       has_active_saas_subscription: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
+      public_store_content: { Args: { p_store_id?: string }; Returns: Json }
       save_combo_components: {
         Args: { p_combo_product_id: number; p_components: Json }
         Returns: undefined
       }
+      store_accepts_orders: { Args: { p_owner: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
