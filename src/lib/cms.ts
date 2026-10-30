@@ -114,15 +114,12 @@ async function rest(table: string, query = "", init: RequestInit = {}) {
   const access = await token();
   return authFetch(`/rest/v1/${table}${query}`, { ...init, headers: { Prefer: "return=representation", ...init.headers } }, access);
 }
-export async function loadPublicContent() {
+export async function loadPublicContent(storeId?: string) {
   if (!configured) return null;
   try {
-    const [products, promos, announcements, components] = await Promise.all([
-      authFetch("/rest/v1/products?select=id,category,name,price,description,image_url,is_popular,is_active,stock_quantity&is_active=eq.true&order=sort_order.asc"),
-      authFetch("/rest/v1/promotions?select=id,title,description,image_url,starts_at,ends_at,is_active&is_active=eq.true"),
-      authFetch("/rest/v1/announcements?select=id,title,body,image_url,is_active&is_active=eq.true"),
-      authFetch("/rest/v1/combo_components?select=combo_product_id,component_product_id,quantity_per_combo"),
-    ]);
+    const { products, promos, announcements, components } = await authFetch("/rest/v1/rpc/public_store_content", {
+      method: "POST", body: JSON.stringify({ p_store_id: storeId ?? null }),
+    });
     const productRows = products as Product[];
     const componentRows = components as ComboComponent[];
     const productsWithAvailability = withComboAvailability(productRows, componentRows);
@@ -180,8 +177,9 @@ export async function createOrder(input: {
   customer_name: string; customer_phone: string; fulfillment: "delivery" | "pickup";
   address: Record<string, string>; payment_method: string; notes: string;
   items: Array<{ product_id: number; quantity: number }>;
-}) {
-  return authFetch("/rest/v1/rpc/create_order", { method: "POST", body: JSON.stringify({
+}, storeId?: string) {
+  return authFetch("/rest/v1/rpc/create_store_order", { method: "POST", body: JSON.stringify({
+    p_store_id: storeId ?? null,
     p_customer_name: input.customer_name, p_customer_phone: input.customer_phone,
     p_fulfillment: input.fulfillment, p_address: input.address,
     p_payment_method: input.payment_method, p_notes: input.notes, p_items: input.items,

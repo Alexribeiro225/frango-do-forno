@@ -7,6 +7,7 @@ import { CounterBoard } from "@/components/CounterBoard";
 import { configured, currentUser, isEmailRegistered, isImpersonating, returnToMaster, signUpTrial, trialDaysLeft, deleteRow, getMySubscription, listComboComponents, listOrders, listRows, saveComboComponents, saveRow, signIn, signOut, uploadImage } from "@/lib/cms";
 import { PeriodPicker } from "@/components/PeriodPicker";
 import { Button } from "@/components/ui/button";
+import { storeSearch } from "@/lib/storefront";
 import { defaultPeriod, periodLabel, periodRange } from "@/lib/period";
 import type { Announcement, KitchenOrder, Product, Promo } from "@/lib/cms";
 
@@ -155,7 +156,7 @@ function Admin() {
   }
   return <main className="admin-page saas-admin-page">
     <aside className="saas-sidebar">
-      <Link className="saas-brand" to="/" aria-label="Frango Show, abrir loja"><img src="/images/frango-show-logo.webp" alt="" className="saas-brand-logo" /><span><b>FRANGO SHOW</b><small>ROTISSERIE · PAINEL</small></span></Link>
+      <Link className="saas-brand" to="/" search={storeSearch(user)} aria-label="Frango Show, abrir loja"><img src="/images/frango-show-logo.webp" alt="" className="saas-brand-logo" /><span><b>FRANGO SHOW</b><small>ROTISSERIE · PAINEL</small></span></Link>
       <div className="saas-nav-group"><span>OPERAÇÃO</span>
         <button className={section === "dashboard" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => setSection("dashboard")}><LayoutDashboard size={19}/> Visão geral</button>
         <button className={section === "kitchen" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => setSection("kitchen")}><ChefHat size={19}/> Pedidos e cozinha</button>
@@ -168,6 +169,7 @@ function Admin() {
         <a className="saas-nav-item" href="#sales-chart" onClick={() => setSection("dashboard")}><BarChart3 size={19}/> Relatórios</a>
       </div>
       <div className="saas-sidebar-bottom">
+        <Link className="saas-nav-item" to="/" search={storeSearch(user)}><Store size={19}/> Abrir minha loja</Link>
         {user.role === "master" && <button className={section === "users" ? "saas-nav-item active" : "saas-nav-item"} onClick={() => setSection("users")}><Users size={19}/> Usuários</button>}
         {user.role === "master" && <Link className="saas-nav-item" to="/admin/planos"><CreditCard size={19}/> Planos SaaS</Link>}
         <span className="saas-store-chip"><span/> Loja conectada</span>

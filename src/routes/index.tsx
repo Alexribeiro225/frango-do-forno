@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { createOrder, loadPublicContent, type Product as CmsProduct } from "@/lib/cms";
 import { addToCart, canAdd, MAX_PER_ITEM } from "@/lib/cart";
+import { parseStoreSearch } from "@/lib/storefront";
+import { Button } from "@/components/ui/button";
 import {
   ArrowLeft, ArrowRight, Check, ChevronDown, Clock3, Instagram, MapPin, Menu,
   Minus, Plus, Search, ShoppingBag, ShoppingCart, Star, Truck, X,
@@ -22,6 +24,7 @@ import cocaColaImage from "@/assets/coca_cola.jpg";
 import guaranaImage from "@/assets/guarana.jpg";
 
 export const Route = createFileRoute("/")({
+  validateSearch: parseStoreSearch,
   head: () => ({
     meta: [
       { title: "Frango Show Rotisserie | Frango Assado em Bauru" },
@@ -89,14 +92,21 @@ function openStatus() {
 }
 
 function Index() {
-  const [catalog, setCatalog] = useState<Item[]>(items);
+  const { loja: storeId } = Route.useSearch();
+  const [catalog, setCatalog] = useState<Item[]>([]);
+  const [catalogError, setCatalogError] = useState("");
+  const [orderSaved, setOrderSaved] = useState<number | null>(null);
   const [cmsPromos, setCmsPromos] = useState<Array<{id:number;title:string;description:string;image_url:string|null}>>([]);
   const [cmsAnnouncements, setCmsAnnouncements] = useState<Array<{id:number;title:string;body:string;image_url:string|null}>>([]);
   useEffect(() => {
+    setCatalog([]); setCart({}); setQuantities({}); setOrderSaved(null);
+    setCmsPromos([]); setCmsAnnouncements([]);
     let cancelled = false;
     const refresh = async () => {
-      const content = await loadPublicContent();
-      if (cancelled || !content) return;
+      const content = await loadPublicContent(storeId);
+      if (cancelled) return;
+      if (!content) { setCatalog([]); setCatalogError("Não foi possível carregar esta loja. Tente novamente em instantes."); return; }
+      setCatalogError("");
       setCatalog(content.products.map((p: CmsProduct) => ({id:p.id,cat:p.category,name:p.name,price:Number(p.price),desc:p.description,img:p.image_url,popular:p.is_popular,stock_quantity:p.stock_quantity})));
       setCmsPromos(content.promos);
       setCmsAnnouncements(content.announcements);
@@ -104,7 +114,7 @@ function Index() {
     void refresh();
     const timer = window.setInterval(refresh, 10_000);
     return () => { cancelled = true; window.clearInterval(timer); };
-  }, []);
+  }, [storeId]);
   const combos = catalog.filter(item => item.cat === "Combos");
   const favoriteOrder = [1, 3, 5, 2];
   const favorites = favoriteOrder.map(id => catalog.find(item => item.id === id)).filter((item): item is Item => item !== undefined);
@@ -155,13 +165,17 @@ function Index() {
       cep: String(form.get("cep") ?? "").trim(), neighborhood: String(form.get("neighborhood") ?? "").trim(),
       complement: String(form.get("complement") ?? "").trim(), reference: String(form.get("reference") ?? "").trim(),
     } : {};
-    const popup = window.open("about:blank", "_blank");
+    const popup = storeId ? null : window.open("about:blank", "_blank");
     setOrderBusy(true);
     try {
       const saved = await createOrder({
         customer_name: name, customer_phone: phone, fulfillment, address, payment_method: payment, notes,
         items: lines.map(item => ({ product_id: item.id, quantity: cart[item.id] ?? 0 })),
-      });
+      }, storeId);
+      if (storeId) {
+        setOrderSaved(saved.order_number); setCart({}); setCartOpen(false); setCheckout(false);
+        return;
+      }
       const deliveryDetails = fulfillment === "delivery" ? [
         "Endereço: " + address.street + ", nº " + address.number,
         address.cep ? "CEP: " + address.cep : "",
@@ -241,6 +255,7 @@ function Index() {
       </header>
 
       <main>
+        {orderSaved !== null && <div className="checkout-success section-wrap" role="status"><b>Pedido #{orderSaved} recebido pela loja!</b><Button variant="ghost" onClick={() => setOrderSaved(null)} aria-label="Fechar confirmação"><X size={18}/></Button></div>}
         <section className="hero-section" id="inicio">
           <div className="hero-inner">
             <div className="hero-copy">
@@ -275,7 +290,7 @@ function Index() {
             )}</div>
           </div>
           <div className="product-grid">{shown.map((item) => <ProductCard key={item.id} item={item} />)}</div>
-          {shown.length === 0 && <div className="empty-results">Não encontramos produtos com esse nome. Tente outra busca.</div>}
+          {shown.length === 0 && <div className="empty-results" role="status">{catalogError || (catalog.length ? "Não encontramos produtos com esse nome. Tente outra busca." : "Nenhum produto disponível nesta loja no momento.")}</div>}
         </section>
 
         <section className="combos-section" id="combos">
@@ -424,7 +439,7 @@ function Index() {
                   <p><span>Taxa de entrega</span><b>{fulfillment === "delivery" ? "A combinar" : "R$ 0,00"}</b></p>
                   <p className="checkout-grand-total"><strong>Total</strong><strong>{brl(total)}</strong></p>
                 </div>
-                {orderError && <p className="checkout-error" role="alert">{orderError}</p>}{whatsappFallback && <div className="checkout-success" role="status"><b>Pedido registrado!</b><a href={whatsappFallback} target="_blank" rel="noreferrer">Continuar para o WhatsApp</a></div>}<button className="button checkout-whatsapp" type="submit" disabled={orderBusy || Boolean(whatsappFallback)}>{orderBusy ? "Registrando pedido..." : whatsappFallback ? "Pedido registrado" : "Finalizar pelo WhatsApp"}</button>
+                {orderError && <p className="checkout-error" role="alert">{orderError}</p>}{whatsappFallback && <div className="checkout-success" role="status"><b>Pedido registrado!</b><a href={whatsappFallback} target="_blank" rel="noreferrer">Continuar para o WhatsApp</a></div>}<Button className="button checkout-whatsapp" type="submit" disabled={orderBusy || Boolean(whatsappFallback)}>{orderBusy ? "Registrando pedido..." : whatsappFallback ? "Pedido registrado" : storeId ? "Finalizar pedido" : "Finalizar pelo WhatsApp"}</Button>
               </div>
             </form>
           ) : (
