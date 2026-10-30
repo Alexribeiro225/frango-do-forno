@@ -1,4 +1,6 @@
 # Tasks
+- [ ] Connect each account's public storefront and order destination without sharing other stores' data.
+- [ ] Verify public checkout and receipt in the registered account's kitchen.
 - [x] Isolate each customer's operational data so new accounts start empty without changing existing store records.
 - [x] Add protected master user deletion with confirmation.
 - [x] Test ownership and deletion protections and verify the dashboard.
