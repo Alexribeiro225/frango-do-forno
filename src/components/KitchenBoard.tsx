@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChefHat, Clock3, Printer, RefreshCw, Trash2 } from "lucide-react";
 import { PeriodPicker } from "@/components/PeriodPicker";
 import { defaultPeriod, periodLabel, periodRange, type PeriodPreset } from "@/lib/period";
-import { deleteOrdersInRange, listOrders, updateOrderStatus, type KitchenOrder } from "@/lib/cms";
+import { deleteOrdersByIds, deleteOrdersInRange, listOrders, updateOrderStatus, type KitchenOrder } from "@/lib/cms";
 
 const money = (value: number) => Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const time = (value: string) => new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
@@ -24,11 +24,13 @@ export function KitchenBoard() {
   const [printPulse, setPrintPulse] = useState(0);
   const [period, setPeriod] = useState(() => defaultPeriod("today"));
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | KitchenOrder["status"]>("all");
+  const [selected, setSelected] = useState<number[]>([]);
   const periodRef = useRef(period);
   periodRef.current = period;
   const knownOrderIds = useRef<Set<number> | null>(null);
   const autoPrintRef = useRef(true);
   const printingRef = useRef(false);
+  const deletingRef = useRef(false);
 
   useEffect(() => {
     const enabled = localStorage.getItem("frango-kitchen-auto-print") !== "false";
@@ -52,6 +54,8 @@ export function KitchenBoard() {
         if (autoPrintRef.current && incoming.length) setPrintQueue(queue => [...queue, ...incoming.reverse()]);
       }
       if (maxId > 0) localStorage.setItem("frango-kitchen-last-seen-order-id", String(maxId));
+      const alive = new Set(latest.map(order => order.id));
+      setSelected(ids => (ids.length ? ids.filter(id => alive.has(id)) : ids));
       setOrders(latest); setUpdatedAt(new Date().toLocaleTimeString("pt-BR")); setError("");
     } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível carregar os pedidos."); }
   }, []);
@@ -62,13 +66,29 @@ export function KitchenBoard() {
     return () => window.clearInterval(timer);
   }, [refresh]);
 
-  useEffect(() => { void refresh(); }, [period, refresh]);
+  useEffect(() => { setSelected([]); void refresh(); }, [period, refresh]);
 
   async function deleteOrders() {
+    if (deletingRef.current) return;
     const label = periodLabel(period);
     if (!window.confirm(`Apagar TODOS os pedidos de ${label}? Esta ação não pode ser desfeita.`)) return;
-    try { const n = await deleteOrdersInRange(periodRange(period)); window.alert(`${n} pedido(s) apagado(s).`); await refresh(); }
+    deletingRef.current = true;
+    try { const n = await deleteOrdersInRange(periodRange(period)); window.alert(`${n} pedido(s) apagado(s).`); setSelected([]); await refresh(); }
     catch (e) { setError(e instanceof Error ? e.message : "Não foi possível apagar os pedidos."); }
+    finally { deletingRef.current = false; }
+  }
+
+  async function deleteSelected() {
+    if (!selected.length || deletingRef.current) return;
+    if (!window.confirm(`Apagar ${selected.length} pedido(s) selecionado(s)? Esta ação não pode ser desfeita.`)) return;
+    deletingRef.current = true;
+    try { const n = await deleteOrdersByIds(selected); window.alert(`${n} pedido(s) apagado(s).`); setSelected([]); await refresh(); }
+    catch (e) { setError(e instanceof Error ? e.message : "Não foi possível apagar os pedidos selecionados."); }
+    finally { deletingRef.current = false; }
+  }
+
+  function toggleOrder(id: number) {
+    setSelected(ids => (ids.includes(id) ? ids.filter(value => value !== id) : [...ids, id]));
   }
 
   async function changeStatus(order: KitchenOrder, status: KitchenOrder["status"]) {
@@ -110,6 +130,19 @@ export function KitchenBoard() {
   }, [autoPrint, printQueue, printPulse, printOrder]);
 
   const visibleOrders = orders.filter(order => statusFilter === "all" ? true : statusFilter === "active" ? order.status === "new" || order.status === "preparing" : order.status === statusFilter);
+  const visibleKey = visibleOrders.map(order => order.id).join(",");
+  const selectedCount = selected.length;
+  const allSelected = visibleOrders.length > 0 && selectedCount === visibleOrders.length;
+  const someSelected = selectedCount > 0 && !allSelected;
+  const selectAllRef = useCallback((el: HTMLInputElement | null) => { if (el) el.indeterminate = someSelected; }, [someSelected]);
+
+  useEffect(() => {
+    if (!selected.length) return;
+    const visible = new Set(visibleKey ? visibleKey.split(",").map(Number) : []);
+    const kept = selected.filter(id => visible.has(id));
+    if (kept.length !== selected.length) setSelected(kept);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleKey]);
 
   return <>
     <div className="kitchen-board-toolbar">
@@ -122,13 +155,23 @@ export function KitchenBoard() {
       <button className="kitchen-refresh-btn" onClick={() => void refresh()} aria-label="Atualizar pedidos"><RefreshCw size={17} /> Atualizar</button>
       <button className="kitchen-refresh-btn" onClick={() => void deleteOrders()} aria-label="Apagar pedidos do período"><Trash2 size={17} /> Apagar pedidos</button>
     </div>
+    <div className="kitchen-select-bar">
+      <label className="kitchen-select-all"><input ref={selectAllRef} type="checkbox" aria-label="Selecionar todos os pedidos" checked={allSelected} disabled={!visibleOrders.length} onChange={() => setSelected(allSelected ? [] : visibleOrders.map(order => order.id))} /> Selecionar todos</label>
+      <span className="kitchen-selected-count">{selectedCount ? selectedCount + " pedido(s) selecionado(s)" : "Nenhum pedido selecionado"}</span>
+      {selectedCount > 0 && <button className="kitchen-clear-selection" onClick={() => setSelected([])}>Limpar seleção</button>}
+      <button className="kitchen-delete-selected" onClick={() => void deleteSelected()} disabled={!selectedCount}><Trash2 size={17} /> Apagar selecionados{selectedCount ? ` (${selectedCount})` : ""}</button>
+    </div>
     {error && <p className="kitchen-error kitchen-alert" role="alert">{error}</p>}
     <section className="kitchen-orders" aria-label="Lista de pedidos">
       {visibleOrders.length === 0 ? <div className="kitchen-empty"><ChefHat size={36} /><b>Nenhum pedido encontrado</b><span>Não há pedidos para o período e status escolhidos.</span></div> :
-      visibleOrders.map(order => <article className="kitchen-order" id={"order-" + order.id} key={order.id}>
-        <div className="kitchen-order-top"><div><span className="kitchen-order-number">Pedido #{order.id}</span><span className={"kitchen-status status-" + order.status}>{statusLabel[order.status]}</span></div><time><Clock3 size={15} />{time(order.created_at)}</time></div>
+      visibleOrders.map(order => <article className={"kitchen-order" + (selected.includes(order.id) ? " is-selected" : "")} id={"order-" + order.id} key={order.id}>
+        <div className="kitchen-order-top">
+          <input className="kitchen-select" type="checkbox" aria-label={"Selecionar pedido " + order.id} checked={selected.includes(order.id)} onChange={() => toggleOrder(order.id)} />
+          <div><span className="kitchen-order-number">Pedido #{order.id}</span><span className={"kitchen-status status-" + order.status}>{statusLabel[order.status]}</span></div>
+          <time><Clock3 size={15} />{time(order.created_at)}</time>
+        </div>
         <div className="kitchen-order-customer"><b>{order.customer_name}</b>{order.customer_phone && <a href={"tel:" + order.customer_phone}>{order.customer_phone}</a>}<span>{order.fulfillment === "delivery" ? "🛵 Delivery" : order.fulfillment === "counter" ? "🏪 Balcão" : "🏠 Retirada"} · {order.payment_method}</span></div>
-        {order.fulfillment === "delivery" && <div className="kitchen-address"><b>Endereço</b><span>{[order.address["street"], order.address["number"] && "nº " + order.address["number"], order.address["neighborhood"], order.address["cep"]].filter(Boolean).join(", ")}</span>{order.address["complement"] && <span>Complemento: {order.address["complement"]}</span>}{order.address["reference"] && <span>Referência: {order.address["reference"]}</span>}</div>}
+        {order.fulfillment === "delivery" && <div className="kitchen-address"><b>Endereço</b><span>{[order.address["street"], order.address["number"] && "nº " + order.address["number"], order.address["neighborhood"], order.address["cep"]].filter(Boolean).join(", ")}</span>{order.address["complement"] && <span>Complemento: {order.address["complement"]}</span>{order.address["reference"] && <span>Referência: {order.address["reference"]}</span>}</div>}
         <div className="kitchen-items"><b>Itens</b>{(order.items || []).map((item,index) => <div className="kitchen-item-wrap" key={item.product_id + "-" + index}><div className="kitchen-item"><span><strong>{item.quantity}×</strong> {item.name}</span><b>{money(Number(item.line_total))}</b></div>{item.description && <small className="kitchen-item-description">{item.description}</small>}{item.components?.length ? <small className="kitchen-item-components">Composição: {item.components.map(component => (component.quantity * item.quantity) + "× " + component.name).join(" · ")}</small> : null}</div>)}</div>
         {order.notes && <div className="kitchen-notes"><b>Observação:</b> {order.notes}</div>}
         <div className="kitchen-total"><span>Subtotal</span><b>{money(Number(order.subtotal))}</b><span>Entrega</span><b>{order.delivery_fee === null ? "A combinar" : money(Number(order.delivery_fee))}</b><strong>Total</strong><strong>{money(Number(order.total))}{order.delivery_fee === null ? " + entrega" : ""}</strong></div>
