@@ -374,6 +374,7 @@ export type Database = {
         Returns: Json
       }
       current_store_owner: { Args: never; Returns: string }
+      delete_orders_by_ids: { Args: { p_ids: number[] }; Returns: number }
       delete_orders_in_range: {
         Args: { p_end: string; p_start: string }
         Returns: number
