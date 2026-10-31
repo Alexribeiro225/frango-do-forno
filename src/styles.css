@@ -529,6 +529,7 @@
   body.printing-kitchen-order .kitchen-order-customer a { color:#000!important; text-decoration:none!important; }
   body.printing-kitchen-order .kitchen-status { border:1px solid #777!important; background:#fff!important; color:#000!important; }
   body.printing-kitchen-order .kitchen-order-actions { display:none!important; }
+  body.printing-kitchen-order .kitchen-select { display:none!important; }
   body.printing-kitchen-order .kitchen-total strong { color:#000!important; font-size:15px!important; }
 }
 
