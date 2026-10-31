@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChefHat, Clock3, Printer, RefreshCw, Trash2 } from "lucide-react";
+import { ChefHat, Clock3, Printer, RefreshCw, Trash2 , X} from "lucide-react";
 import { PeriodPicker } from "@/components/PeriodPicker";
 import { defaultPeriod, periodLabel, periodRange, type PeriodPreset } from "@/lib/period";
 import { deleteOrdersByIds, deleteOrdersInRange, listOrders, updateOrderStatus, type KitchenOrder } from "@/lib/cms";
@@ -25,6 +25,7 @@ export function KitchenBoard() {
   const [period, setPeriod] = useState(() => defaultPeriod("today"));
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | KitchenOrder["status"]>("all");
   const [selected, setSelected] = useState<number[]>([]);
+const [selectMode, setSelectMode] = useState(false);
   const periodRef = useRef(period);
   periodRef.current = period;
   const knownOrderIds = useRef<Set<number> | null>(null);
@@ -88,6 +89,7 @@ export function KitchenBoard() {
   }
 
   function toggleOrder(id: number) {
+    setSelectMode(true);
     setSelected(ids => (ids.includes(id) ? ids.filter(value => value !== id) : [...ids, id]));
   }
 
