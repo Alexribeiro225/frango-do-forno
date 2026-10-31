@@ -43,6 +43,13 @@
       "when": 1793408870760,
       "tag": "0005_delete_orders_in_range",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793409542979,
+      "tag": "0006_delete_orders_by_ids",
+      "breakpoints": true
     }
   ]
 }
