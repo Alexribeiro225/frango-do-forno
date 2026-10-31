@@ -36,6 +36,13 @@
       "when": 1793408195446,
       "tag": "0004_create_order_restore_with_store",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793408870760,
+      "tag": "0005_delete_orders_in_range",
+      "breakpoints": true
     }
   ]
 }
