@@ -205,3 +205,8 @@ export async function createCounterSale(payment_method: string, items: Array<{ p
 export async function deleteOrdersInRange(range: { start: Date; end: Date }) {
   return rest("rpc/delete_orders_in_range", "", { method: "POST", body: JSON.stringify({ p_start: range.start.toISOString(), p_end: range.end.toISOString() }) }) as Promise<number>;
 }
+
+export async function deleteOrdersByIds(ids: number[]) {
+  if (!ids.length) return 0;
+  return rest("rpc/delete_orders_by_ids", "", { method: "POST", body: JSON.stringify({ p_ids: ids }) }) as Promise<number>;
+}
