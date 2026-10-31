@@ -374,6 +374,10 @@ export type Database = {
         Returns: Json
       }
       current_store_owner: { Args: never; Returns: string }
+      delete_orders_in_range: {
+        Args: { p_end: string; p_start: string }
+        Returns: number
+      }
       email_registered: { Args: { p_email: string }; Returns: boolean }
       has_active_saas_subscription: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }

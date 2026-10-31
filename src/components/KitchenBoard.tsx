@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChefHat, Clock3, Printer, RefreshCw } from "lucide-react";
+import { ChefHat, Clock3, Printer, RefreshCw, Trash2 } from "lucide-react";
 import { PeriodPicker } from "@/components/PeriodPicker";
-import { defaultPeriod, periodRange, type PeriodPreset } from "@/lib/period";
-import { listOrders, updateOrderStatus, type KitchenOrder } from "@/lib/cms";
+import { defaultPeriod, periodLabel, periodRange, type PeriodPreset } from "@/lib/period";
+import { deleteOrdersInRange, listOrders, updateOrderStatus, type KitchenOrder } from "@/lib/cms";
 
 const money = (value: number) => Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const time = (value: string) => new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
@@ -64,6 +64,13 @@ export function KitchenBoard() {
 
   useEffect(() => { void refresh(); }, [period, refresh]);
 
+  async function deleteOrders() {
+    const label = periodLabel(period);
+    if (!window.confirm(`Apagar TODOS os pedidos de ${label}? Esta ação não pode ser desfeita.`)) return;
+    try { const n = await deleteOrdersInRange(periodRange(period)); window.alert(`${n} pedido(s) apagado(s).`); await refresh(); }
+    catch (e) { setError(e instanceof Error ? e.message : "Não foi possível apagar os pedidos."); }
+  }
+
   async function changeStatus(order: KitchenOrder, status: KitchenOrder["status"]) {
     try { await updateOrderStatus(order.id, status); await refresh(); }
     catch (e) { setError(e instanceof Error ? e.message : "Não foi possível atualizar o pedido."); }
@@ -113,6 +120,7 @@ export function KitchenBoard() {
       <span className="kitchen-refresh-label">{updatedAt ? "Atualizado às " + updatedAt : "Carregando…"}</span>
       <label className="kitchen-auto-print"><input type="checkbox" checked={autoPrint} onChange={event => { const enabled = event.currentTarget.checked; autoPrintRef.current = enabled; setAutoPrint(enabled); localStorage.setItem("frango-kitchen-auto-print", String(enabled)); if (!enabled) setPrintQueue([]); }} /><Printer size={16} /> Impressão automática</label>
       <button className="kitchen-refresh-btn" onClick={() => void refresh()} aria-label="Atualizar pedidos"><RefreshCw size={17} /> Atualizar</button>
+      <button className="kitchen-refresh-btn" onClick={() => void deleteOrders()} aria-label="Apagar pedidos do período"><Trash2 size={17} /> Apagar pedidos</button>
     </div>
     {error && <p className="kitchen-error kitchen-alert" role="alert">{error}</p>}
     <section className="kitchen-orders" aria-label="Lista de pedidos">
