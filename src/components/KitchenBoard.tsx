@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ChefHat, Clock3, Printer, RefreshCw, Trash2 } from "lucide-react";
 import { PeriodPicker } from "@/components/PeriodPicker";
 import { defaultPeriod, periodLabel, periodRange, type PeriodPreset } from "@/lib/period";
