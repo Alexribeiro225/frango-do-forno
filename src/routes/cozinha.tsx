@@ -42,7 +42,7 @@ function Kitchen() {
 
   return <main className="kitchen-page">
     <header className="kitchen-header">
-      <div><img src={logoImg} alt="" className="brand-logo kitchen-logo" /><<div><h1>Painel da cozinha</h1><p>Pedidos recebidos pelo site · Atualiza a cada 10 segundos</p></div></div>
+      <div><img src={logoImg} alt="" className="brand-logo kitchen-logo" /><div><h1>Painel da cozinha</h1><p>Pedidos recebidos pelo site · Atualiza a cada 10 segundos</p></div></div>
       <div className="kitchen-header-actions"><button onClick={() => { signOut(); setUser(null); }}><LogOut size={17} /> Sair</button></div>
     </header>
     <KitchenBoard />
