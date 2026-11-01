@@ -74,7 +74,7 @@ const [selectMode, setSelectMode] = useState(false);
     const label = periodLabel(period);
     if (!window.confirm(`Apagar TODOS os pedidos de ${label}? Esta ação não pode ser desfeita.`)) return;
     deletingRef.current = true;
-    try { const n = await deleteOrdersInRange(periodRange(period)); window.alert(`${n} pedido(s) apagado(s).`); setSelected([] setSelectMode(false);); await refresh(); }
+    try { const n = await deleteOrdersInRange(periodRange(period)); window.alert(`${n} pedido(s) apagado(s).`); setSelected([]); setSelectMode(false); await refresh(); }
     catch (e) { setError(e instanceof Error ? e.message : "Não foi possível apagar os pedidos."); }
     finally { deletingRef.current = false; }
   }
